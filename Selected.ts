@@ -1,1 +1,6 @@
-export type Selected = { from: number; to: number; text: string };
+export type Selected = {
+  token: string;
+  from: number;
+  to: number;
+  text: string;
+};

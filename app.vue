@@ -2,6 +2,15 @@
   <div class="container">
     <div class="left">
       <h2>Text</h2>
+
+      <button @click="onClear">Clear</button>
+
+      <div v-for="token in tokens">
+        <p @click="selectToken(token)">
+          {{ token }}
+        </p>
+      </div>
+      <p>Selected: {{ selectedToken }}</p>
       <span id="lorem" v-html="field"></span>
     </div>
 
@@ -13,6 +22,8 @@
 </template>
 
 <script lang="ts" setup>
+import type { Selected } from "./Selected";
+
 const field = `What is Lorem Ipsum? Lorem Ipsum is simply dummy text of the printing and
       typesetting industry. Lorem Ipsum has been the industry's standard dummy
       text ever since the 1500s, when an unknown printer took a galley of type
@@ -46,24 +57,43 @@ const field = `What is Lorem Ipsum? Lorem Ipsum is simply dummy text of the prin
       Cicero are also reproduced in their exact original form, accompanied by
       English versions from the 1914 translation by H. Rackham.`;
 
+const tokens: string[] = ["Words", "Things", "Names"];
+const selections = ref<Selected[]>([]);
+const selectedToken = ref("");
+const classByToken = {
+  Words: "hl",
+  Things: "hl-2",
+  Names: "hl-3",
+};
+
+type Dictionary = {
+  [key: string]: Range[];
+};
+
+const hl: Dictionary = {};
+
 function getSelectedText() {
   if (window.getSelection) {
     return window.getSelection();
   }
 }
 
-const selections = ref<any[]>([]);
-function doSomethingWithSelectedText() {
+function selectToken(token: string) {
+  selectedToken.value = token;
+}
+
+function highlightBySelection() {
   const selection = getSelectedText();
-  if (selection?.type !== "Range") return;
+  if (selection?.type !== "Range" || !selectedToken.value) return;
 
   const from = selection.anchorOffset;
   const to = selection.focusOffset;
 
-  const selected = {
+  const selected: Selected = {
     from,
     to,
     text: selection.toString(),
+    token: selectedToken.value,
   };
 
   highlight(selected);
@@ -72,14 +102,17 @@ function doSomethingWithSelectedText() {
   localStorage.setItem("selection", JSON.stringify(selections.value));
 }
 
-const hl: Range[] = [];
+function onClear() {
+  localStorage.removeItem("selection");
+  window.location.reload();
+}
 
-function highlight(selected: any) {
+function highlight(selected: Selected) {
   if (!CSS.highlights) {
     alert("The CSS Custom Highlight API is not supported in this browser!");
   }
 
-  const { from, to } = selected;
+  const { from, to, token } = selected;
   const selection = getSelectedText()!;
   const node = document.getElementById("lorem")!;
 
@@ -88,7 +121,9 @@ function highlight(selected: any) {
   range.setEnd(node.firstChild!, to);
 
   selection.addRange(range);
-  hl.push(range);
+  if (!hl[token]) hl[token] = [];
+
+  hl[token].push(range);
 
   selection.empty();
 
@@ -96,13 +131,24 @@ function highlight(selected: any) {
 }
 
 function applyHighlight() {
-  CSS.highlights.set("hl-2", new Highlight(...hl.flat()));
+  for (const iterator of Object.entries(hl)) {
+    const [key, value] = iterator;
+    const cl = classByToken[key as keyof typeof classByToken];
+
+    CSS.highlights.set(cl, new Highlight(...value.flat()));
+  }
+
+  if (Object.keys(hl).length > 1) {
+    document.getElementById("lorem")!.style.lineHeight = "1.5";
+  }
+  if (Object.keys(hl).length > 2) {
+    document.getElementById("lorem")!.style.lineHeight = "2";
+  }
 }
 
 function loadHighlight() {
-  const savedSelections = localStorage.getItem("selection");
+  const savedSelections = localStorage.getItem("selection") ?? "[]";
 
-  if (!savedSelections) return;
   const parsedSavedSelections = JSON.parse(savedSelections);
 
   for (const selected of parsedSavedSelections) {
@@ -112,7 +158,7 @@ function loadHighlight() {
 }
 
 onMounted(() => {
-  document.onmouseup = doSomethingWithSelectedText;
+  document.onmouseup = highlightBySelection;
 
   loadHighlight();
 });
@@ -127,7 +173,7 @@ span {
   background-color: yellow;
 
   -webkit-text-decoration: darkturquoise solid underline;
-  text-decoration: darkturquoise solid underline 5px;
+  text-decoration: darkturquoise solid underline 6px;
   -webkit-text-decoration-skip: ink;
   text-decoration-skip-ink: auto;
 }
@@ -137,6 +183,15 @@ span {
 
   -webkit-text-decoration: rgb(185, 0, 209) solid underline;
   text-decoration: rgb(185, 0, 209) solid underline 5px;
+  -webkit-text-decoration-skip: ink;
+  text-decoration-skip-ink: auto;
+}
+
+::highlight(hl-3) {
+  background-color: yellow;
+
+  -webkit-text-decoration: #f60b26 solid underline;
+  text-decoration: #f60b26 solid underline 4px;
   -webkit-text-decoration-skip: ink;
   text-decoration-skip-ink: auto;
 }
