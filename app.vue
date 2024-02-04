@@ -3,7 +3,7 @@
     <div class="left">
       <h2>Text</h2>
 
-      <button @click="highlighting.clearSelection()">Clear</button>
+      <button @click="clearSelection()">Clear</button>
 
       <div v-for="group in groups">
         <p @click="highlighting.group = group">
@@ -58,6 +58,7 @@ const field = `What is Lorem Ipsum? Lorem Ipsum is simply dummy text of the prin
       English versions from the 1914 translation by H. Rackham.`;
 
 const groups: string[] = ["Words", "Things", "Names"];
+
 const classByGroup = groups.reduce((acc, token, i) => {
   acc[token] = `hl-${i + 1}`;
   return acc;
@@ -65,14 +66,35 @@ const classByGroup = groups.reduce((acc, token, i) => {
 
 const highlighting = ref<Highlighting>(new Highlighting(classByGroup));
 
+const clearSelection = () => {
+  localStorage.removeItem("selection");
+  window.location.reload();
+};
+
+const loadSavedHighlight = () => {
+  const selections = JSON.parse(localStorage.getItem("selection") ?? "[]");
+
+  highlighting.value.loadHighlight(selections);
+};
+
+watch(
+  () => highlighting.value.selections,
+  (selections) => {
+    localStorage.setItem("selection", JSON.stringify(selections));
+  }
+);
+
 onMounted(() => {
   highlighting.value.attachNode(document.getElementById("lorem")!);
+
+  loadSavedHighlight();
 });
 </script>
 <style>
 span {
   font-family: monospace;
   font-size: 17px;
+  line-height: 1.5;
 }
 
 ::highlight(hl-1) {
