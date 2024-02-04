@@ -3,26 +3,26 @@
     <div class="left">
       <h2>Text</h2>
 
-      <button @click="onClear">Clear</button>
+      <button @click="highlighting.clearSelection()">Clear</button>
 
-      <div v-for="token in tokens">
-        <p @click="selectToken(token)">
-          {{ token }}
+      <div v-for="group in groups">
+        <p @click="highlighting.group = group">
+          {{ group }}
         </p>
       </div>
-      <p>Selected: {{ selectedToken }}</p>
+      <p>Selected: {{ highlighting.group }}</p>
       <span id="lorem" v-html="field"></span>
     </div>
 
     <div class="right">
       <h2>Json (Highlight object)</h2>
-      <span v-text="JSON.stringify(selections)" />
+      <span v-text="JSON.stringify(highlighting.selections)" />
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import type { Selected } from "./Selected";
+import { Highlighting } from "./highlighting";
 
 const field = `What is Lorem Ipsum? Lorem Ipsum is simply dummy text of the printing and
       typesetting industry. Lorem Ipsum has been the industry's standard dummy
@@ -57,110 +57,16 @@ const field = `What is Lorem Ipsum? Lorem Ipsum is simply dummy text of the prin
       Cicero are also reproduced in their exact original form, accompanied by
       English versions from the 1914 translation by H. Rackham.`;
 
-const tokens: string[] = ["Words", "Things", "Names"];
-const selections = ref<Selected[]>([]);
-const selectedToken = ref("");
-const classByToken = {
-  Words: "hl",
-  Things: "hl-2",
-  Names: "hl-3",
-};
+const groups: string[] = ["Words", "Things", "Names"];
+const classByGroup = groups.reduce((acc, token, i) => {
+  acc[token] = `hl-${i + 1}`;
+  return acc;
+}, {} as Record<string, string>);
 
-type Dictionary = {
-  [key: string]: Range[];
-};
-
-const hl: Dictionary = {};
-
-function getSelectedText() {
-  if (window.getSelection) {
-    return window.getSelection();
-  }
-}
-
-function selectToken(token: string) {
-  selectedToken.value = token;
-}
-
-function highlightBySelection() {
-  const selection = getSelectedText();
-  if (selection?.type !== "Range" || !selectedToken.value) return;
-
-  const from = selection.anchorOffset;
-  const to = selection.focusOffset;
-
-  const selected: Selected = {
-    from,
-    to,
-    text: selection.toString(),
-    token: selectedToken.value,
-  };
-
-  highlight(selected);
-
-  selections.value.push(selected);
-  localStorage.setItem("selection", JSON.stringify(selections.value));
-}
-
-function onClear() {
-  localStorage.removeItem("selection");
-  window.location.reload();
-}
-
-function highlight(selected: Selected) {
-  if (!CSS.highlights) {
-    alert("The CSS Custom Highlight API is not supported in this browser!");
-  }
-
-  const { from, to, token } = selected;
-  const selection = getSelectedText()!;
-  const node = document.getElementById("lorem")!;
-
-  const range = document.createRange();
-  range.setStart(node.firstChild!, from);
-  range.setEnd(node.firstChild!, to);
-
-  selection.addRange(range);
-  if (!hl[token]) hl[token] = [];
-
-  hl[token].push(range);
-
-  selection.empty();
-
-  applyHighlight();
-}
-
-function applyHighlight() {
-  for (const iterator of Object.entries(hl)) {
-    const [key, value] = iterator;
-    const cl = classByToken[key as keyof typeof classByToken];
-
-    CSS.highlights.set(cl, new Highlight(...value.flat()));
-  }
-
-  if (Object.keys(hl).length > 1) {
-    document.getElementById("lorem")!.style.lineHeight = "1.5";
-  }
-  if (Object.keys(hl).length > 2) {
-    document.getElementById("lorem")!.style.lineHeight = "2";
-  }
-}
-
-function loadHighlight() {
-  const savedSelections = localStorage.getItem("selection") ?? "[]";
-
-  const parsedSavedSelections = JSON.parse(savedSelections);
-
-  for (const selected of parsedSavedSelections) {
-    highlight(selected);
-    selections.value.push(selected);
-  }
-}
+const highlighting = ref<Highlighting>(new Highlighting(classByGroup));
 
 onMounted(() => {
-  document.onmouseup = highlightBySelection;
-
-  loadHighlight();
+  highlighting.value.attachNode(document.getElementById("lorem")!);
 });
 </script>
 <style>
@@ -169,7 +75,7 @@ span {
   font-size: 17px;
 }
 
-::highlight(hl) {
+::highlight(hl-1) {
   background-color: yellow;
 
   -webkit-text-decoration: darkturquoise solid underline;
@@ -209,3 +115,4 @@ span {
   width: 50%;
 }
 </style>
+./highlighting
