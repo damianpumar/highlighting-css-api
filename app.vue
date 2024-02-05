@@ -5,12 +5,12 @@
 
       <button @click="clearSelection()">Clear</button>
 
-      <div v-for="entity in entities">
-        <p @click="highlighting.entity = entity">
-          {{ entity }}
+      <div v-for="group in groups">
+        <p @click="highlighting.group = group">
+          {{ group }}
         </p>
       </div>
-      <p>Selected: {{ highlighting.entity }}</p>
+      <p>Selected: {{ highlighting.group }}</p>
       <span id="lorem" v-html="field"></span>
     </div>
 
@@ -59,9 +59,9 @@ const field = `What is Lorem Ipsum? Lorem Ipsum is simply dummy text of the prin
       Cicero are also reproduced in their exact original form, accompanied by
       English versions from the 1914 translation by H. Rackham.`;
 
-const entities: string[] = ["Words", "Things", "Names", "Unknown"];
+const groups: string[] = ["Words", "Things", "Names", "Unknown"];
 
-const classByGroup = entities.reduce((acc, token, i) => {
+const classByGroup = groups.reduce((acc, token, i) => {
   acc[token] = `hl-${i + 1}`;
   return acc;
 }, {} as Record<string, string>);
@@ -70,7 +70,7 @@ const highlighting = ref<Highlighting>(new Highlighting(classByGroup));
 
 const clearSelection = () => {
   localStorage.removeItem(LOCAL_STORAGE_KEY);
-  highlighting.value.deleteAllHighlights();
+  window.location.reload();
 };
 
 const loadSavedHighlight = () => {
