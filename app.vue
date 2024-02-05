@@ -106,14 +106,15 @@ const loadSavedHighlight = () => {
 };
 
 watch(
-  () => highlighting.value.selections,
+  () => highlighting.value.highlights,
   (selections) => {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(selections));
   }
 );
 
 onMounted(() => {
-  highlighting.value.attachNode(document.getElementById("lorem")!);
+  const node = document.getElementById("lorem")!;
+  highlighting.value.attachNode(node);
 
   loadSavedHighlight();
 });
@@ -127,18 +128,38 @@ span {
 
 ::highlight(hl-1) {
   background-color: yellow;
+
+  -webkit-text-decoration: darkturquoise solid underline;
+  text-decoration: darkturquoise solid underline 6px;
+  -webkit-text-decoration-skip: ink;
+  text-decoration-skip-ink: auto;
 }
 
 ::highlight(hl-2) {
-  background-color: rgb(185, 0, 209);
+  background-color: yellow;
+
+  -webkit-text-decoration: rgb(185, 0, 209) solid underline;
+  text-decoration: rgb(185, 0, 209) solid underline 5px;
+  -webkit-text-decoration-skip: ink;
+  text-decoration-skip-ink: auto;
 }
 
 ::highlight(hl-3) {
-  background-color: #f60b26;
+  background-color: yellow;
+
+  -webkit-text-decoration: #f60b26 solid underline;
+  text-decoration: #f60b26 solid underline 3px;
+  -webkit-text-decoration-skip: ink;
+  text-decoration-skip-ink: auto;
 }
 
 ::highlight(hl-4) {
-  background-color: #19eec0;
+  background-color: yellow;
+
+  -webkit-text-decoration: #19eec0 solid underline;
+  text-decoration: #19eec0 solid underline 3px;
+  -webkit-text-decoration-skip: ink;
+  text-decoration-skip-ink: auto;
 }
 
 .entities {

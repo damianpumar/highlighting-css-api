@@ -163,8 +163,8 @@ export class Highlighting {
     const to = selection.focusOffset;
 
     return {
-      from,
-      to,
+      from: Math.min(from, to),
+      to: Math.max(from, to),
       text,
       entity: this.entity,
     };
