@@ -5,7 +5,7 @@ type Dictionary<V> = {
 export type Selected = {
   from: number;
   to: number;
-  group: string;
+  entity: string;
   text: string;
 };
 
@@ -13,7 +13,7 @@ export class Highlighting {
   private highlights: Dictionary<Range[]> = {};
   private _selections: Selected[] = [];
   private node: HTMLElement | undefined;
-  group: string = "";
+  entity: string = "";
 
   constructor(private readonly cssByGroup: Dictionary<string>) {}
 
@@ -35,9 +35,16 @@ export class Highlighting {
     }
   }
 
+  removeAllHighlights() {
+    this._selections = [];
+    this.highlights = {};
+
+    CSS.highlights.clear();
+  }
+
   private highlightUserSelection() {
     const selection = this.getSelectedText();
-    if (selection?.type !== "Range" || !this.group) return;
+    if (selection?.type !== "Range" || !this.entity) return;
 
     const text = selection.toString();
     const from = selection.anchorOffset;
@@ -47,7 +54,7 @@ export class Highlighting {
       from,
       to,
       text,
-      group: this.group,
+      entity: this.entity,
     };
 
     this.highlight(selected);
@@ -74,31 +81,36 @@ export class Highlighting {
       return;
     }
 
+    const { entity } = selected;
+
     const selection = this.getSelectedText()!;
 
-    const { from, to, group } = selected;
+    const range = this.createRange(selected);
 
-    const range = document.createRange();
-    range.setStart(this.node.firstChild!, from);
-    range.setEnd(this.node.firstChild!, to);
-
-    if (!this.highlights[group]) this.highlights[group] = [];
-    this.highlights[group].push(range);
-
-    selection.addRange(range);
-    selection.empty();
-
-    this._selections.push(selected);
+    if (!this.highlights[entity]) this.highlights[entity] = [];
+    this.highlights[entity].push(range);
 
     this.applyHighlightStyle();
+
+    this._selections.push(selected);
+    selection.empty();
   }
 
   private applyHighlightStyle() {
     for (const highlight of Object.entries(this.highlights)) {
-      const [key, value] = highlight;
-      const className = this.cssByGroup[key as keyof typeof this.cssByGroup];
+      const [entity, selections] = highlight;
+      const className = this.cssByGroup[entity as keyof typeof this.cssByGroup];
 
-      CSS.highlights.set(className, new Highlight(...value.flat()));
+      CSS.highlights.set(className, new Highlight(...selections.flat()));
     }
+  }
+
+  private createRange({ from, to }: Selected) {
+    const range = document.createRange();
+
+    range.setStart(this.node!.firstChild!, from);
+    range.setEnd(this.node!.firstChild!, to);
+
+    return range;
   }
 }
