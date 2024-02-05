@@ -66,7 +66,7 @@ export class Highlighting {
 
       while (true) {
         const previousCharacter = nodeText.charAt(selected.from - 1);
-        if (previousCharacter === " ") {
+        if (previousCharacter === " " || selected.from === 0) {
           selected.from = selected.from;
           break;
         }
@@ -76,7 +76,7 @@ export class Highlighting {
 
       while (true) {
         const nextCharacter = nodeText.charAt(selected.to);
-        if (nextCharacter === " ") {
+        if (nextCharacter === " " || selected.to === nodeText.length - 1) {
           selected.to = selected.to;
           break;
         }
@@ -131,6 +131,7 @@ export class Highlighting {
 
   private applyHighlightStyle() {
     const highlights: Dictionary<Range[]> = {};
+    CSS.highlights.clear();
 
     for (const part of this.selections) {
       if (!highlights[part.entity]) highlights[part.entity] = [];

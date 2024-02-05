@@ -120,6 +120,11 @@ onMounted(() => {
 });
 </script>
 <style>
+::selection {
+  background-color: #f06;
+  color: white;
+}
+
 span {
   font-family: monospace;
   font-size: 17px;
