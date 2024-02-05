@@ -150,7 +150,7 @@ export class Highlighting {
   }
 
   private createRange({ from, to }: Selected) {
-    const range = document.createRange();
+    const range = new Range();
 
     range.setStart(this.node!.firstChild!, from);
     range.setEnd(this.node!.firstChild!, to);
