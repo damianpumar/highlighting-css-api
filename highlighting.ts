@@ -15,7 +15,7 @@ type Configuration = {
 };
 
 export class Highlighting {
-  private parts: Selected[] = [];
+  private selections: Selected[] = [];
   private node: HTMLElement | undefined;
   entity: string = "";
   config: Configuration = {
@@ -25,8 +25,8 @@ export class Highlighting {
 
   constructor(private readonly cssByGroup: Dictionary<string>) {}
 
-  get selections() {
-    return [...this.parts];
+  get highlights() {
+    return [...this.selections];
   }
 
   applyConfig(config: Configuration) {
@@ -48,7 +48,7 @@ export class Highlighting {
   }
 
   removeAllHighlights() {
-    this.parts = [];
+    this.selections = [];
 
     CSS.highlights.clear();
   }
@@ -62,7 +62,7 @@ export class Highlighting {
     if (!this.config.allowCharacter && selected.text.length === 1) return;
 
     if (!this.config.allowOverlap) {
-      const overlapping = this.parts.filter((s) => {
+      const overlapping = this.selections.filter((s) => {
         return (
           (selected.from <= s.from && selected.to >= s.to) ||
           (selected.from <= s.from && selected.to >= s.to) ||
@@ -71,7 +71,7 @@ export class Highlighting {
         );
       });
 
-      this.parts = this.parts.filter((s) => !overlapping.includes(s));
+      this.selections = this.selections.filter((s) => !overlapping.includes(s));
     }
 
     this.highlight(selected);
@@ -98,7 +98,7 @@ export class Highlighting {
       return;
     }
 
-    this.parts.push(selected);
+    this.selections.push(selected);
 
     this.applyHighlightStyle();
   }
@@ -106,7 +106,7 @@ export class Highlighting {
   private applyHighlightStyle() {
     const highlights: Dictionary<Range[]> = {};
 
-    for (const part of this.parts) {
+    for (const part of this.selections) {
       if (!highlights[part.entity]) highlights[part.entity] = [];
 
       const range = this.createRange(part);

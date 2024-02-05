@@ -40,7 +40,7 @@
       <button @click="clearSelection()">Clear</button>
       <br />
 
-      <span v-text="JSON.stringify(highlighting.selections)" />
+      <span v-text="JSON.stringify(highlighting.highlights)" />
     </div>
   </div>
 </template>
