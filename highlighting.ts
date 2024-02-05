@@ -15,7 +15,6 @@ type Configuration = {
 };
 
 export class Highlighting {
-  private highlights: Dictionary<Range[]> = {};
   private parts: Selected[] = [];
   private node: HTMLElement | undefined;
   entity: string = "";
@@ -50,7 +49,6 @@ export class Highlighting {
 
   removeAllHighlights() {
     this.parts = [];
-    this.highlights = {};
 
     CSS.highlights.clear();
   }
@@ -64,20 +62,16 @@ export class Highlighting {
     if (!this.config.allowCharacter && selected.text.length === 1) return;
 
     if (!this.config.allowOverlap) {
-      const overlapping = this.parts.filter(
-        (s) =>
+      const overlapping = this.parts.filter((s) => {
+        return (
           (selected.from <= s.from && selected.to >= s.to) ||
-          (selected.from >= s.from && selected.to >= s.to) ||
-          (selected.from <= s.from && selected.to >= s.from) ||
-          (selected.from >= s.from && selected.to <= s.to)
-      );
+          (selected.from <= s.from && selected.to >= s.to) ||
+          (selected.to <= s.to && selected.to >= s.from) ||
+          (selected.from <= s.to && selected.from >= s.from)
+        );
+      });
 
-      if (overlapping.length) {
-        this.parts = this.parts.filter((s) => !overlapping.includes(s));
-
-        // selected.from = Math.min(...overlapping.map((s) => s.from));
-        // selected.to = Math.max(...overlapping.map((s) => s.to));
-      }
+      this.parts = this.parts.filter((s) => !overlapping.includes(s));
     }
 
     this.highlight(selected);
@@ -104,23 +98,23 @@ export class Highlighting {
       return;
     }
 
-    const { entity } = selected;
-
-    const selection = this.getSelectedText()!;
-
-    const range = this.createRange(selected);
-
-    if (!this.highlights[entity]) this.highlights[entity] = [];
-    this.highlights[entity].push(range);
+    this.parts.push(selected);
 
     this.applyHighlightStyle();
-
-    this.parts.push(selected);
-    selection.empty();
   }
 
   private applyHighlightStyle() {
-    for (const highlight of Object.entries(this.highlights)) {
+    const highlights: Dictionary<Range[]> = {};
+
+    for (const part of this.parts) {
+      if (!highlights[part.entity]) highlights[part.entity] = [];
+
+      const range = this.createRange(part);
+
+      highlights[part.entity].push(range);
+    }
+
+    for (const highlight of Object.entries(highlights)) {
       const [entity, selections] = highlight;
       const className = this.cssByGroup[entity as keyof typeof this.cssByGroup];
 
