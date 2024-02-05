@@ -59,7 +59,7 @@ const field = `What is Lorem Ipsum? Lorem Ipsum is simply dummy text of the prin
       Cicero are also reproduced in their exact original form, accompanied by
       English versions from the 1914 translation by H. Rackham.`;
 
-const groups: string[] = ["Words", "Things", "Names"];
+const groups: string[] = ["Words", "Things", "Names", "Unknown"];
 
 const classByGroup = groups.reduce((acc, token, i) => {
   acc[token] = `hl-${i + 1}`;
@@ -98,7 +98,7 @@ onMounted(() => {
 span {
   font-family: monospace;
   font-size: 17px;
-  line-height: 1.5;
+  line-height: 2;
 }
 
 ::highlight(hl-1) {
@@ -123,7 +123,16 @@ span {
   background-color: yellow;
 
   -webkit-text-decoration: #f60b26 solid underline;
-  text-decoration: #f60b26 solid underline 4px;
+  text-decoration: #f60b26 solid underline 3px;
+  -webkit-text-decoration-skip: ink;
+  text-decoration-skip-ink: auto;
+}
+
+::highlight(hl-4) {
+  background-color: yellow;
+
+  -webkit-text-decoration: #19eec0 solid underline;
+  text-decoration: #19eec0 solid underline 3px;
   -webkit-text-decoration-skip: ink;
   text-decoration-skip-ink: auto;
 }
