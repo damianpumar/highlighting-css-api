@@ -59,7 +59,31 @@ export class Highlighting {
 
     const selected = this.createSelected(selection);
 
-    if (!this.config.allowCharacter && selected.text.length === 1) return;
+    if (!this.config.allowCharacter) {
+      if (selected.text === "") return;
+
+      const nodeText = this.node!.firstChild!.textContent!;
+
+      while (true) {
+        const previousCharacter = nodeText.charAt(selected.from - 1);
+        if (previousCharacter === " ") {
+          selected.from = selected.from;
+          break;
+        }
+        selected.from--;
+        selected.text = `${previousCharacter}${selected.text}`;
+      }
+
+      while (true) {
+        const nextCharacter = nodeText.charAt(selected.to);
+        if (nextCharacter === " ") {
+          selected.to = selected.to;
+          break;
+        }
+        selected.to++;
+        selected.text = `${selected.text}${nextCharacter}`;
+      }
+    }
 
     if (!this.config.allowOverlap) {
       const overlapping = this.selections.filter((s) => {
@@ -75,6 +99,8 @@ export class Highlighting {
     }
 
     this.highlight(selected);
+
+    selection.empty();
   }
 
   private getSelectedText() {
