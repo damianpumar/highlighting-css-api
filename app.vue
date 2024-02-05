@@ -3,19 +3,43 @@
     <div class="left">
       <h2>Text</h2>
 
-      <button @click="clearSelection()">Clear</button>
-
-      <div v-for="entity in entities">
-        <p @click="highlighting.entity = entity">
-          {{ entity }}
-        </p>
+      <div>
+        <p>Tokens</p>
+        <div class="entities">
+          <p v-for="entity in entities" @click="highlighting.entity = entity">
+            | {{ entity }} |
+          </p>
+          <p>Selected: {{ highlighting.entity }}</p>
+        </div>
+        <hr />
       </div>
-      <p>Selected: {{ highlighting.entity }}</p>
+
+      <div>
+        <p>Config</p>
+        <input
+          type="checkbox"
+          id="allowOverlap"
+          v-model="highlighting.config.allowOverlap"
+        />
+        <label for="allowOverlap">Allow overlap</label>
+        <br />
+        <input
+          type="checkbox"
+          id="characterLevel"
+          v-model="highlighting.config.allowCharacter"
+        />
+        <label for="characterLevel">Character level</label>
+        <hr />
+      </div>
+
       <span id="lorem" v-html="field"></span>
     </div>
 
     <div class="right">
       <h2>Json (Highlight object)</h2>
+      <button @click="clearSelection()">Clear</button>
+      <br />
+
       <span v-text="JSON.stringify(highlighting.selections)" />
     </div>
   </div>
@@ -135,6 +159,12 @@ span {
   text-decoration: #19eec0 solid underline 3px;
   -webkit-text-decoration-skip: ink;
   text-decoration-skip-ink: auto;
+}
+
+.entities {
+  display: flex;
+  flex-direction: row;
+  gap: 5px;
 }
 
 .container {

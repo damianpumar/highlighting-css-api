@@ -9,16 +9,29 @@ export type Selected = {
   text: string;
 };
 
+type Configuration = {
+  allowOverlap: boolean;
+  allowCharacter: boolean;
+};
+
 export class Highlighting {
   private highlights: Dictionary<Range[]> = {};
-  private _selections: Selected[] = [];
+  private parts: Selected[] = [];
   private node: HTMLElement | undefined;
   entity: string = "";
+  config: Configuration = {
+    allowOverlap: false,
+    allowCharacter: false,
+  };
 
   constructor(private readonly cssByGroup: Dictionary<string>) {}
 
   get selections() {
-    return [...this._selections];
+    return [...this.parts];
+  }
+
+  applyConfig(config: Configuration) {
+    this.config = config;
   }
 
   attachNode(node: HTMLElement) {
@@ -36,7 +49,7 @@ export class Highlighting {
   }
 
   removeAllHighlights() {
-    this._selections = [];
+    this.parts = [];
     this.highlights = {};
 
     CSS.highlights.clear();
@@ -46,16 +59,26 @@ export class Highlighting {
     const selection = this.getSelectedText();
     if (selection?.type !== "Range" || !this.entity) return;
 
-    const text = selection.toString();
-    const from = selection.anchorOffset;
-    const to = selection.focusOffset;
+    const selected = this.createSelected(selection);
 
-    const selected: Selected = {
-      from,
-      to,
-      text,
-      entity: this.entity,
-    };
+    if (!this.config.allowCharacter && selected.text.length === 1) return;
+
+    if (!this.config.allowOverlap) {
+      const overlapping = this.parts.filter(
+        (s) =>
+          (selected.from <= s.from && selected.to >= s.to) ||
+          (selected.from >= s.from && selected.to >= s.to) ||
+          (selected.from <= s.from && selected.to >= s.from) ||
+          (selected.from >= s.from && selected.to <= s.to)
+      );
+
+      if (overlapping.length) {
+        this.parts = this.parts.filter((s) => !overlapping.includes(s));
+
+        // selected.from = Math.min(...overlapping.map((s) => s.from));
+        // selected.to = Math.max(...overlapping.map((s) => s.to));
+      }
+    }
 
     this.highlight(selected);
   }
@@ -92,7 +115,7 @@ export class Highlighting {
 
     this.applyHighlightStyle();
 
-    this._selections.push(selected);
+    this.parts.push(selected);
     selection.empty();
   }
 
@@ -112,5 +135,18 @@ export class Highlighting {
     range.setEnd(this.node!.firstChild!, to);
 
     return range;
+  }
+
+  private createSelected(selection: Selection) {
+    const text = selection.toString();
+    const from = selection.anchorOffset;
+    const to = selection.focusOffset;
+
+    return {
+      from,
+      to,
+      text,
+      entity: this.entity,
+    };
   }
 }
