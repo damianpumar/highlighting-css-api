@@ -24,6 +24,8 @@
 <script lang="ts" setup>
 import { Highlighting } from "./highlighting";
 
+const LOCAL_STORAGE_KEY = "selection";
+
 const field = `What is Lorem Ipsum? Lorem Ipsum is simply dummy text of the printing and
       typesetting industry. Lorem Ipsum has been the industry's standard dummy
       text ever since the 1500s, when an unknown printer took a galley of type
@@ -67,12 +69,14 @@ const classByGroup = groups.reduce((acc, token, i) => {
 const highlighting = ref<Highlighting>(new Highlighting(classByGroup));
 
 const clearSelection = () => {
-  localStorage.removeItem("selection");
+  localStorage.removeItem(LOCAL_STORAGE_KEY);
   window.location.reload();
 };
 
 const loadSavedHighlight = () => {
-  const selections = JSON.parse(localStorage.getItem("selection") ?? "[]");
+  const selections = JSON.parse(
+    localStorage.getItem(LOCAL_STORAGE_KEY) ?? "[]"
+  );
 
   highlighting.value.loadHighlight(selections);
 };
@@ -80,7 +84,7 @@ const loadSavedHighlight = () => {
 watch(
   () => highlighting.value.selections,
   (selections) => {
-    localStorage.setItem("selection", JSON.stringify(selections));
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(selections));
   }
 );
 
