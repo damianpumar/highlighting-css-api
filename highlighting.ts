@@ -33,11 +33,28 @@ export class Highlighting {
     this.config = config;
   }
 
+  private get entitySpanContainer() {
+    let node = document.getElementById("highlight__entity-container");
+    if (!node) {
+      node = document.createElement("div");
+      node.id = "highlight__entity-container";
+    }
+
+    return node;
+  }
+
   attachNode(node: HTMLElement) {
     this.node = node;
+    document.body.appendChild(this.entitySpanContainer);
 
     this.node.addEventListener("mouseup", () => {
       this.highlightUserSelection();
+
+      this.applyStyles();
+    });
+
+    window.addEventListener("resize", () => {
+      this.applyStyles();
     });
   }
 
@@ -45,12 +62,13 @@ export class Highlighting {
     for (const selected of selections) {
       this.highlight(selected);
     }
+
+    this.applyStyles();
   }
 
   removeAllHighlights() {
     this.selections = [];
-
-    CSS.highlights.clear();
+    this.applyStyles();
   }
 
   private highlightUserSelection() {
@@ -65,7 +83,10 @@ export class Highlighting {
       const nodeText = this.node!.firstChild!.textContent!;
 
       while (true) {
-        const previousCharacter = nodeText.charAt(selected.from - 1);
+        const previousCharacter = nodeText
+          .charAt(selected.from - 1)
+          .replaceAll("\n", " ");
+
         if (previousCharacter === " " || selected.from === 0) {
           selected.from = selected.from;
           break;
@@ -75,7 +96,10 @@ export class Highlighting {
       }
 
       while (true) {
-        const nextCharacter = nodeText.charAt(selected.to);
+        const nextCharacter = nodeText
+          .charAt(selected.to)
+          .replaceAll("\n", " ");
+
         if (nextCharacter === " " || selected.to === nodeText.length - 1) {
           selected.to = selected.to;
           break;
@@ -125,13 +149,16 @@ export class Highlighting {
     }
 
     this.selections.push(selected);
+  }
 
+  private applyStyles() {
     this.applyHighlightStyle();
+    this.applyEntityStyle();
   }
 
   private applyHighlightStyle() {
-    const highlights: Dictionary<Range[]> = {};
     CSS.highlights.clear();
+    const highlights: Dictionary<Range[]> = {};
 
     for (const part of this.selections) {
       if (!highlights[part.entity]) highlights[part.entity] = [];
@@ -146,6 +173,49 @@ export class Highlighting {
       const className = this.cssByGroup[entity as keyof typeof this.cssByGroup];
 
       CSS.highlights.set(className, new Highlight(...selections.flat()));
+    }
+  }
+
+  private applyEntityStyle() {
+    const entityPosition: {
+      left: number;
+      top: number;
+      entity: string;
+    }[] = [];
+
+    while (this.entitySpanContainer.firstChild) {
+      this.entitySpanContainer.removeChild(this.entitySpanContainer.firstChild);
+    }
+
+    for (const selection of this.selections) {
+      const { entity } = selection;
+      const range = this.createRange({ ...selection, to: selection.from + 1 });
+
+      const { left, top } = range.getBoundingClientRect();
+
+      if (entityPosition.some((p) => p.left === left)) {
+        entityPosition.push({
+          left: left,
+          top: top + 8,
+          entity,
+        });
+
+        continue;
+      }
+
+      entityPosition.push({ left, top: top, entity });
+    }
+
+    for (const { left, top, entity } of entityPosition) {
+      const span = document.createElement("span");
+      span.className = "highlight__entity";
+
+      span.style.left = `${left}px`;
+      span.style.top = `${top}px`;
+
+      span.innerText = entity;
+
+      this.entitySpanContainer.appendChild(span);
     }
   }
 

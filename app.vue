@@ -32,7 +32,7 @@
         <hr />
       </div>
 
-      <span id="lorem" v-html="field"></span>
+      <span id="lorem" class="highlight__text" v-html="field"></span>
     </div>
 
     <div class="right">
@@ -125,17 +125,11 @@ onMounted(() => {
   color: white;
 }
 
-span {
-  font-family: monospace;
-  font-size: 17px;
-  line-height: 2;
-}
-
 ::highlight(hl-1) {
   background-color: yellow;
 
   -webkit-text-decoration: darkturquoise solid underline;
-  text-decoration: darkturquoise solid underline 6px;
+  text-decoration: darkturquoise solid underline 3px;
   -webkit-text-decoration-skip: ink;
   text-decoration-skip-ink: auto;
 }
@@ -144,7 +138,7 @@ span {
   background-color: yellow;
 
   -webkit-text-decoration: rgb(185, 0, 209) solid underline;
-  text-decoration: rgb(185, 0, 209) solid underline 5px;
+  text-decoration: rgb(185, 0, 209) solid underline 3px;
   -webkit-text-decoration-skip: ink;
   text-decoration-skip-ink: auto;
 }
@@ -165,6 +159,20 @@ span {
   text-decoration: #19eec0 solid underline 3px;
   -webkit-text-decoration-skip: ink;
   text-decoration-skip-ink: auto;
+}
+
+.highlight__text {
+  font-family: monospace;
+  font-size: 17px;
+  line-height: 2.5;
+  cursor: text;
+}
+
+.highlight__entity {
+  display: block;
+  margin-top: 20px;
+  font-size: 10px;
+  position: absolute;
 }
 
 .entities {
