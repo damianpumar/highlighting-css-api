@@ -13,6 +13,9 @@ type Styles = {
 
   /** This class name is used to style the entity span */
   entityClassName?: string;
+
+  /** Span container ID */
+  spanContainerId?: string;
 };
 
 export class Highlighting {
@@ -25,6 +28,7 @@ export class Highlighting {
     this.styles = {
       entitiesGap: 8,
       entityClassName: "",
+      spanContainerId: "entity-span-container",
       ...styles,
     };
   }
@@ -38,10 +42,12 @@ export class Highlighting {
   }
 
   private get entitySpanContainer() {
-    let node = document.getElementById("highlight__entity-container");
+    const { spanContainerId } = this.styles;
+
+    let node = document.getElementById(spanContainerId);
     if (!node) {
       node = document.createElement("div");
-      node.id = "highlight__entity-container";
+      node.id = spanContainerId;
     }
 
     return node;
