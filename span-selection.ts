@@ -40,9 +40,7 @@ export class SpanSelection {
     };
 
     if (!this.config.allowCharacter) {
-      if (this.isEmpty(selected.text)) return;
-      if (this.isASymbol(selected.text)) return;
-      if (this.hasSelectedACharacter(textSelection)) return;
+      if (!this.isValidSelection(textSelection)) return;
 
       this.completeLeftSide(nodeText, selected);
 
@@ -84,7 +82,7 @@ export class SpanSelection {
     while (true) {
       const previousCharacter = nodeText.charAt(selected.from - 1);
 
-      if (this.isALimit(previousCharacter) || selected.from === 0) {
+      if (this.isEmpty(previousCharacter) || selected.from === 0) {
         break;
       }
       selected.from--;
@@ -99,7 +97,7 @@ export class SpanSelection {
     while (true) {
       const nextCharacter = nodeText.charAt(selected.to);
 
-      if (this.isALimit(nextCharacter) || selected.to === nodeText.length - 1) {
+      if (this.isEmpty(nextCharacter) || selected.to === nodeText.length - 1) {
         break;
       }
       selected.to++;
@@ -107,23 +105,38 @@ export class SpanSelection {
     }
   }
 
-  private hasSelectedACharacter(textSelection: TextSelection) {
-    return (
-      textSelection.text.length === 1 &&
-      !this.isEmpty(textSelection.nodeText.charAt(textSelection.from - 1)) &&
-      !this.isEmpty(textSelection.nodeText.charAt(textSelection.to))
-    );
-  }
-
   private isEmpty(character: string) {
     return character === " " || character === "\n";
   }
 
-  private isALimit(character: string) {
-    return this.isEmpty(character) || this.isASymbol(character);
+  private isJustAWord(textSelection: TextSelection) {
+    const currentText = textSelection.text;
+
+    const previous = textSelection.nodeText.charAt(textSelection.from - 1);
+    const next = textSelection.nodeText.charAt(textSelection.to);
+
+    return (
+      currentText.length === 1 &&
+      this.isEmpty(previous) &&
+      this.isEmpty(next) &&
+      !this.isSymbol(currentText)
+    );
   }
 
-  private isASymbol(character: string) {
-    return character.toLowerCase() === character.toUpperCase();
+  private isSymbol(character: string) {
+    const numbers = "1234567890".split("");
+
+    return (
+      character.toLowerCase() === character.toUpperCase() &&
+      !numbers.includes(character)
+    );
+  }
+
+  private isValidSelection(textSelection: TextSelection) {
+    if (this.isEmpty(textSelection.text[0])) return false;
+    if (this.isSymbol(textSelection.text[0])) return false;
+    if (!this.isJustAWord(textSelection)) return false;
+
+    return true;
   }
 }
