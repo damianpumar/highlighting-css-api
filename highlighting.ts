@@ -131,6 +131,7 @@ export class Highlighting {
 
   private applyEntityStyle() {
     const entityPosition: {
+      id: string;
       left: number;
       top: number;
       entity: string;
@@ -146,21 +147,18 @@ export class Highlighting {
 
       const { left, top } = range.getBoundingClientRect();
       const spanTop = top + window.scrollY;
+      const id = `${span.from}-${span.to}-${entity}`;
+
+      const position = { id, left, top: spanTop, entity };
 
       if (entityPosition.some((p) => p.left === left && p.top === top)) {
-        entityPosition.push({
-          left: left,
-          top: spanTop + this.styles.entitiesGap,
-          entity,
-        });
-
-        continue;
+        position.top = spanTop + this.styles.entitiesGap;
       }
 
-      entityPosition.push({ left, top: spanTop, entity });
+      entityPosition.push(position);
     }
 
-    for (const { left, top, entity } of entityPosition) {
+    for (const { id, left, top, entity } of entityPosition) {
       const span = document.createElement("span");
       span.className = this.styles.entityClassName;
 
@@ -169,8 +167,20 @@ export class Highlighting {
 
       span.innerText = entity;
 
+      const button = document.createElement("span");
+      button.innerText = " - X ";
+      button.style.cursor = "pointer";
+      button.onclick = () => {
+        this.removeSpan(id);
+      };
+      span.appendChild(button);
+
       this.entitySpanContainer.appendChild(span);
     }
+  }
+  private removeSpan(id: string) {
+    this.spanSelection.removeSpan(id);
+    this.applyStyles();
   }
 
   private createRange({ from, to }: Span) {

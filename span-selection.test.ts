@@ -273,4 +273,32 @@ describe("Span Selection", () => {
       }
     );
   });
+
+  describe("should remove span created", () => {
+    test("should remove span", () => {
+      const spanSelection = new SpanSelection();
+      const textSelection: TextSelection = {
+        from: 10,
+        to: 17,
+        text: "rem Ips",
+        entity: "TOKEN",
+        nodeText: DUMMY_TEXT,
+      };
+
+      spanSelection.addSpan(textSelection);
+
+      expect(spanSelection.spans).toEqual([
+        {
+          from: 8,
+          to: 20,
+          text: "Lorem Ipsum?",
+          entity: "TOKEN",
+        },
+      ]);
+
+      spanSelection.removeSpan("8-20-TOKEN");
+
+      expect(spanSelection.spans).toHaveLength(0);
+    });
+  });
 });

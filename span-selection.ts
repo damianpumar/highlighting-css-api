@@ -71,6 +71,12 @@ export class SpanSelection {
     this.selections = [];
   }
 
+  removeSpan(id: string) {
+    this.selections = this.selections.filter(
+      (s) => `${s.from}-${s.to}-${s.entity}` !== id
+    );
+  }
+
   private select(selected: Span) {
     this.selections.push(selected);
   }
