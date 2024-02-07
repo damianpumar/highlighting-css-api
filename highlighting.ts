@@ -1,26 +1,10 @@
+import { SpanSelection, type Span, type TextSelection } from "./span-selection";
+
 type Dictionary<V> = {
   [key: string]: V;
 };
 
-export type Selected = {
-  from: number;
-  to: number;
-  entity: string;
-  text: string;
-};
-
-type Configuration = {
-  allowOverlap: boolean;
-  allowCharacter: boolean;
-};
-
 type Styles = {
-  entitiesCSS: Dictionary<string>;
-  entitiesGap: number;
-  entityClassName: string;
-};
-
-type StylesParams = {
   /** Is the Highlight CSS class name for each entity */
   entitiesCSS: Dictionary<string>;
 
@@ -32,16 +16,12 @@ type StylesParams = {
 };
 
 export class Highlighting {
-  private selections: Selected[] = [];
+  private readonly spanSelection = new SpanSelection();
   private node: HTMLElement | undefined;
-  private readonly styles: Styles;
+  private readonly styles: Required<Styles>;
   entity: string = "";
-  config: Configuration = {
-    allowOverlap: false,
-    allowCharacter: false,
-  };
 
-  constructor(styles: StylesParams) {
+  constructor(styles: Styles) {
     this.styles = {
       entitiesGap: 8,
       entityClassName: "",
@@ -49,12 +29,12 @@ export class Highlighting {
     };
   }
 
-  get highlights() {
-    return [...this.selections];
+  get spans() {
+    return [...this.spanSelection.spans];
   }
 
-  applyConfig(config: Configuration) {
-    this.config = config;
+  get config() {
+    return this.spanSelection.config;
   }
 
   private get entitySpanContainer() {
@@ -82,94 +62,39 @@ export class Highlighting {
     });
   }
 
-  loadHighlight(selections: Selected[] = []) {
-    for (const selected of selections) {
-      this.highlight(selected);
+  loadHighlights(selections: Span[] = []) {
+    if (!CSS.highlights) {
+      console.error(
+        "The CSS Custom Highlight API is not supported in this browser!"
+      );
     }
 
-    this.applyStyles();
-  }
-
-  removeAllHighlights() {
-    this.selections = [];
-    this.applyStyles();
-  }
-
-  private highlightUserSelection() {
-    const selection = this.getSelectedText();
-    if (selection?.type !== "Range" || !this.entity) return;
-
-    const selected = this.createSelected(selection);
-
-    if (!this.config.allowCharacter) {
-      if (selected.text === "") return;
-
-      const nodeText = this.node!.firstChild!.textContent!;
-
-      while (true) {
-        const previousCharacter = nodeText
-          .charAt(selected.from - 1)
-          .replaceAll("\n", " ");
-
-        if (previousCharacter === " " || selected.from === 0) {
-          break;
-        }
-        selected.from--;
-        selected.text = `${previousCharacter}${selected.text}`;
-      }
-
-      while (true) {
-        const nextCharacter = nodeText
-          .charAt(selected.to)
-          .replaceAll("\n", " ");
-
-        if (nextCharacter === " " || selected.to === nodeText.length - 1) {
-          break;
-        }
-        selected.to++;
-        selected.text = `${selected.text}${nextCharacter}`;
-      }
-    }
-
-    if (!this.config.allowOverlap) {
-      const overlapping = this.selections.filter((s) => {
-        return (
-          (selected.from <= s.from && selected.to >= s.to) ||
-          (selected.to <= s.to && selected.to >= s.from) ||
-          (selected.from <= s.to && selected.from >= s.from)
-        );
-      });
-
-      this.selections = this.selections.filter((s) => !overlapping.includes(s));
-    }
-
-    this.highlight(selected);
-
-    selection.empty();
-  }
-
-  private getSelectedText() {
-    if (window.getSelection) {
-      return window.getSelection();
-    }
-  }
-
-  private highlight(selected: Selected) {
     if (!this.node) {
       throw new Error(
         "Node not attached, use `attachNode` method with HTMLElement that contains the text to select"
       );
     }
 
-    if (!CSS.highlights) {
-      console.error(
-        "The CSS Custom Highlight API is not supported in this browser!"
-      );
+    this.spanSelection.loadSpans(selections);
 
-      return;
+    this.applyStyles();
+  }
+
+  removeAllHighlights() {
+    this.spanSelection.clear();
+    this.applyStyles();
+  }
+
+  private highlightUserSelection() {
+    const textSelection = this.createTextSelection();
+
+    this.spanSelection.addSpan(textSelection);
+  }
+
+  private getSelectedText() {
+    if (window.getSelection) {
+      return window.getSelection();
     }
-
-    this.selections.push(selected);
   }
 
   private applyStyles() {
@@ -181,12 +106,12 @@ export class Highlighting {
     CSS.highlights.clear();
     const highlights: Dictionary<Range[]> = {};
 
-    for (const part of this.selections) {
-      if (!highlights[part.entity]) highlights[part.entity] = [];
+    for (const span of this.spans) {
+      if (!highlights[span.entity]) highlights[span.entity] = [];
 
-      const range = this.createRange(part);
+      const range = this.createRange(span);
 
-      highlights[part.entity].push(range);
+      highlights[span.entity].push(range);
     }
 
     for (const highlight of Object.entries(highlights)) {
@@ -209,9 +134,9 @@ export class Highlighting {
       this.entitySpanContainer.removeChild(this.entitySpanContainer.firstChild);
     }
 
-    for (const selection of this.selections) {
-      const { entity } = selection;
-      const range = this.createRange({ ...selection, to: selection.from + 1 });
+    for (const span of this.spans) {
+      const { entity } = span;
+      const range = this.createRange({ ...span, to: span.from + 1 });
 
       const { left, top } = range.getBoundingClientRect();
 
@@ -241,7 +166,7 @@ export class Highlighting {
     }
   }
 
-  private createRange({ from, to }: Selected) {
+  private createRange({ from, to }: Span) {
     const range = new Range();
 
     range.setStart(this.node!.firstChild!, from);
@@ -250,16 +175,23 @@ export class Highlighting {
     return range;
   }
 
-  private createSelected(selection: Selection) {
+  private createTextSelection(): TextSelection | undefined {
+    const selection = this.getSelectedText();
+    if (selection?.type !== "Range" || !this.entity) return;
+
     const text = selection.toString();
     const from = selection.anchorOffset;
     const to = selection.focusOffset;
+    const nodeText = selection.focusNode?.textContent!;
+
+    selection.empty();
 
     return {
       from: Math.min(from, to),
       to: Math.max(from, to),
       text,
       entity: this.entity,
+      nodeText,
     };
   }
 }

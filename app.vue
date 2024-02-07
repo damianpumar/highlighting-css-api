@@ -40,7 +40,7 @@
       <button @click="clearSelection()">Clear</button>
       <br />
 
-      <span v-text="JSON.stringify(highlighting.highlights)" />
+      <span v-text="JSON.stringify(highlighting.spans)" />
     </div>
   </div>
 </template>
@@ -108,11 +108,11 @@ const loadSavedHighlight = () => {
     localStorage.getItem(LOCAL_STORAGE_KEY) ?? "[]"
   );
 
-  highlighting.value.loadHighlight(selections);
+  highlighting.value.loadHighlights(selections);
 };
 
 watch(
-  () => highlighting.value.highlights,
+  () => highlighting.value.spans,
   (selections) => {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(selections));
   }
