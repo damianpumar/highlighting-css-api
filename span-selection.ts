@@ -135,7 +135,7 @@ export class SpanSelection {
   private isValidSelection(textSelection: TextSelection) {
     if (this.isEmpty(textSelection.text[0])) return false;
     if (this.isSymbol(textSelection.text[0])) return false;
-    if (!this.isJustAWord(textSelection)) return false;
+    if (this.isJustAWord(textSelection)) return true;
 
     return true;
   }
