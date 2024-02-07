@@ -1,6 +1,6 @@
 import { Span, SpanSelection, TextSelection } from "./span-selection";
 
-const field = `What is Lorem Ipsum? Lorem Ipsum is simply dummy text of the printing and
+const DUMMY_TEXT = `What is Lorem Ipsum? Lorem Ipsum is simply dummy text of the printing and
       typesetting industry. Lorem Ipsum has been the industry's standard dummy
       text ever since the 1500s, when an unknown printer took a galley of type
       and scrambled it to make a type specimen book. It has survived not only
@@ -34,15 +34,15 @@ const field = `What is Lorem Ipsum? Lorem Ipsum is simply dummy text of the prin
       English versions from the 1914 translation by H. Rackham.`;
 
 describe("Span Selection", () => {
-  describe("should complete token correctly", () => {
+  describe("should auto complete token correctly", () => {
     test.each([
       [
-        { from: 9, to: 15, text: "orem I", entity: "Word" },
+        { from: 9, to: 15, text: "orem I", entity: "TOKEN" },
         {
-          entity: "Word",
           from: 8,
           to: 20,
           text: "Lorem Ipsum?",
+          entity: "TOKEN",
         },
       ],
       [
@@ -50,43 +50,61 @@ describe("Span Selection", () => {
           from: 1865,
           to: 1870,
           text: ".10.3",
-          entity: "Word",
+          entity: "TOKEN",
         },
         {
           from: 1864,
           to: 1871,
           text: "1.10.33",
-          entity: "Word",
+          entity: "TOKEN",
         },
       ],
       [
-        { from: 849, to: 857, text: "re-or-le", entity: "Words" },
-        { from: 847, to: 859, text: "more-or-less", entity: "Words" },
+        { from: 849, to: 857, text: "re-or-le", entity: "TOKEN" },
+        { from: 847, to: 859, text: "more-or-less", entity: "TOKEN" },
       ],
-      [{ from: 4, to: 5, text: " ", entity: "Words" }, undefined],
-    ])(`%o %o`, (actual: Span, expected?: Span) => {
+      [
+        { from: 1120, to: 1136, text: "for 'lorem ipsum", entity: "TOKEN" },
+        { from: 1120, to: 1137, text: "for 'lorem ipsum'", entity: "TOKEN" },
+      ],
+      [
+        {
+          from: 1872,
+          to: 1911,
+          text: 'of "de Finibus Bonorum et Malorum',
+          entity: "TOKEN",
+        },
+        {
+          from: 1872,
+          to: 1912,
+          text: 'of "de Finibus Bonorum et Malorum"',
+          entity: "TOKEN",
+        },
+      ],
+      [
+        { from: 1993, to: 1994, text: "a", entity: "TOKEN" },
+        { from: 1993, to: 1994, text: "a", entity: "TOKEN" },
+      ],
+    ])(`%o %o`, (actual: Span, expected: Span) => {
       const spanSelection = new SpanSelection();
 
       const textSelection: TextSelection = {
         ...actual,
-        nodeText: field,
+        nodeText: DUMMY_TEXT,
       };
 
       spanSelection.addSpan(textSelection);
 
-      if (!expected) {
-        expect(spanSelection.spans).toHaveLength(0);
-      } else {
-        expect(spanSelection.spans[0]).toEqual(expected);
-      }
+      expect(spanSelection.spans[0]).toEqual(expected);
+      expect(spanSelection.spans).toHaveLength(1);
     });
   });
 
   describe("should allow selection by character level", () => {
     test.each([
       [
-        { from: 4, to: 5, text: " ", entity: "Words" },
-        { from: 4, to: 5, text: " ", entity: "Words" },
+        { from: 4, to: 5, text: " ", entity: "TOKEN" },
+        { from: 4, to: 5, text: " ", entity: "TOKEN" },
       ],
     ])(`%o %o`, (actual: Span, expected: Span) => {
       const spanSelection = new SpanSelection();
@@ -94,7 +112,7 @@ describe("Span Selection", () => {
 
       const textSelection: TextSelection = {
         ...actual,
-        nodeText: field,
+        nodeText: DUMMY_TEXT,
       };
 
       spanSelection.addSpan(textSelection);
@@ -107,12 +125,34 @@ describe("Span Selection", () => {
     test.each([
       [
         [
-          { from: 849, to: 857, text: "re-or-le", entity: "Words" },
-          { from: 849, to: 857, text: "re-or-le", entity: "Colors" },
+          { from: 849, to: 857, text: "re-or-le", entity: "TOKEN" },
+          { from: 849, to: 857, text: "re-or-le", entity: "TOKEN-2" },
         ],
         [
-          { from: 847, to: 859, text: "more-or-less", entity: "Words" },
-          { from: 847, to: 859, text: "more-or-less", entity: "Colors" },
+          { from: 847, to: 859, text: "more-or-less", entity: "TOKEN" },
+          { from: 847, to: 859, text: "more-or-less", entity: "TOKEN-2" },
+        ],
+      ],
+      [
+        [
+          {
+            from: 65,
+            to: 86,
+            text: "ting and typese",
+            entity: "TOKEN",
+          },
+          { from: 64, to: 69, text: "nting", entity: "TOKEN-2" },
+          // { from: 69, to: 70, text: " ", entity: "TOKEN-3" },
+        ],
+        [
+          {
+            from: 61,
+            to: 91,
+            text: "printing and typesetting",
+            entity: "TOKEN",
+          },
+          { from: 61, to: 69, text: "printing", entity: "TOKEN-2" },
+          // { from: 69, to: 70, text: " ", entity: "TOKEN-3" },
         ],
       ],
     ])(`%o %o`, (actual: Span[], expected: Span[]) => {
@@ -122,7 +162,7 @@ describe("Span Selection", () => {
       actual.forEach((span) => {
         const textSelection: TextSelection = {
           ...span,
-          nodeText: field,
+          nodeText: DUMMY_TEXT,
         };
 
         spanSelection.addSpan(textSelection);
@@ -132,19 +172,105 @@ describe("Span Selection", () => {
     });
   });
 
-  test("should not allow select space", () => {
-    const spanSelection = new SpanSelection();
+  describe("should allow overlapping selection for character level", () => {
+    test.each([
+      [
+        [
+          {
+            from: 61,
+            to: 91,
+            text: "printing and typesetting",
+            entity: "TOKEN",
+          },
+          { from: 61, to: 69, text: "printing", entity: "TOKEN-2" },
+          { from: 69, to: 70, text: " ", entity: "TOKEN-3" },
+        ],
+        [
+          {
+            from: 61,
+            to: 91,
+            text: "printing and typesetting",
+            entity: "TOKEN",
+          },
+          { from: 61, to: 69, text: "printing", entity: "TOKEN-2" },
+          { from: 69, to: 70, text: " ", entity: "TOKEN-3" },
+        ],
+      ],
+    ])(`%o %o`, (actual: Span[], expected: Span[]) => {
+      const spanSelection = new SpanSelection();
+      spanSelection.config.allowOverlap = true;
+      spanSelection.config.allowCharacter = true;
 
-    const textSelection: TextSelection = {
-      entity: "Word",
-      from: 4,
-      to: 4,
-      text: " ",
-      nodeText: field,
-    };
+      actual.forEach((span) => {
+        const textSelection: TextSelection = {
+          ...span,
+          nodeText: DUMMY_TEXT,
+        };
 
-    spanSelection.addSpan(textSelection);
+        spanSelection.addSpan(textSelection);
+      });
 
-    expect(spanSelection.spans).toHaveLength(0);
+      expect(spanSelection.spans).toEqual(expected);
+    });
+  });
+
+  describe("should replace current token when overlapping is not allowed", () => {
+    test.each([
+      [
+        [
+          {
+            from: 61,
+            to: 91,
+            text: "printing and typesetting",
+            entity: "TOKEN",
+          },
+          {
+            from: 55,
+            to: 97,
+            text: "f the printing and typesetting indus",
+            entity: "TOKEN",
+          },
+        ],
+        {
+          from: 54,
+          to: 100,
+          text: "of the printing and typesetting industry",
+          entity: "TOKEN",
+        },
+      ],
+    ])(`%o %o`, (actual: Span[], expected: Span) => {
+      const spanSelection = new SpanSelection();
+
+      actual.forEach((span) => {
+        const textSelection: TextSelection = {
+          ...span,
+          nodeText: DUMMY_TEXT,
+        };
+
+        spanSelection.addSpan(textSelection);
+      });
+
+      expect(spanSelection.spans[0]).toEqual(expected);
+      expect(spanSelection.spans).toHaveLength(1);
+    });
+  });
+
+  describe("should not create span for one character when character level is not allowed", () => {
+    test.each([{ from: 4, to: 5, text: " ", entity: "TOKEN" }])(
+      `%o %o`,
+      (actual: Span) => {
+        const spanSelection = new SpanSelection();
+        spanSelection.config.allowCharacter = false;
+
+        const textSelection: TextSelection = {
+          ...actual,
+          nodeText: DUMMY_TEXT,
+        };
+
+        spanSelection.addSpan(textSelection);
+
+        expect(spanSelection.spans).toEqual([]);
+      }
+    );
   });
 });

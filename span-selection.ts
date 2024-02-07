@@ -98,8 +98,13 @@ export class SpanSelection {
       const nextCharacter = nodeText.charAt(selected.to);
 
       if (this.isEmpty(nextCharacter) || selected.to === nodeText.length - 1) {
+        if (this.isSymbol(selected.text[selected.text.length - 1])) {
+          selected.text = selected.text.substring(0, selected.text.length - 1);
+          selected.to--;
+        }
         break;
       }
+
       selected.to++;
       selected.text = `${selected.text}${nextCharacter}`;
     }
@@ -124,12 +129,9 @@ export class SpanSelection {
   }
 
   private isSymbol(character: string) {
-    const numbers = "1234567890".split("");
+    const format = /[!@#$%^&*()_+\-=\[\]{};:\\|,.<>\/]+/;
 
-    return (
-      character.toLowerCase() === character.toUpperCase() &&
-      !numbers.includes(character)
-    );
+    return format.test(character);
   }
 
   private isValidSelection(textSelection: TextSelection) {
