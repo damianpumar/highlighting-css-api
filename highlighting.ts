@@ -58,7 +58,7 @@ export class Highlighting {
     });
 
     window.addEventListener("resize", () => {
-      this.applyStyles();
+      this.applyEntityStyle();
     });
   }
 
@@ -139,18 +139,19 @@ export class Highlighting {
       const range = this.createRange({ ...span, to: span.from + 1 });
 
       const { left, top } = range.getBoundingClientRect();
+      const spanTop = top + window.scrollY;
 
       if (entityPosition.some((p) => p.left === left && p.top === top)) {
         entityPosition.push({
           left: left,
-          top: top + this.styles.entitiesGap,
+          top: spanTop + this.styles.entitiesGap,
           entity,
         });
 
         continue;
       }
 
-      entityPosition.push({ left, top, entity });
+      entityPosition.push({ left, top: spanTop, entity });
     }
 
     for (const { left, top, entity } of entityPosition) {
