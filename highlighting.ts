@@ -14,16 +14,40 @@ type Configuration = {
   allowCharacter: boolean;
 };
 
+type Styles = {
+  entitiesCSS: Dictionary<string>;
+  entitiesGap: number;
+  entityClassName: string;
+};
+
+type StylesParams = {
+  /** Is the Highlight CSS class name for each entity */
+  entitiesCSS: Dictionary<string>;
+
+  /** This gap is used to separate spans vertically when allow overlap is true */
+  entitiesGap?: number;
+
+  /** This class name is used to style the entity span */
+  entityClassName?: string;
+};
+
 export class Highlighting {
   private selections: Selected[] = [];
   private node: HTMLElement | undefined;
+  private readonly styles: Styles;
   entity: string = "";
   config: Configuration = {
     allowOverlap: false,
     allowCharacter: false,
   };
 
-  constructor(private readonly cssByGroup: Dictionary<string>) {}
+  constructor(styles: StylesParams) {
+    this.styles = {
+      entitiesGap: 8,
+      entityClassName: "",
+      ...styles,
+    };
+  }
 
   get highlights() {
     return [...this.selections];
@@ -88,7 +112,6 @@ export class Highlighting {
           .replaceAll("\n", " ");
 
         if (previousCharacter === " " || selected.from === 0) {
-          selected.from = selected.from;
           break;
         }
         selected.from--;
@@ -101,7 +124,6 @@ export class Highlighting {
           .replaceAll("\n", " ");
 
         if (nextCharacter === " " || selected.to === nodeText.length - 1) {
-          selected.to = selected.to;
           break;
         }
         selected.to++;
@@ -112,7 +134,6 @@ export class Highlighting {
     if (!this.config.allowOverlap) {
       const overlapping = this.selections.filter((s) => {
         return (
-          (selected.from <= s.from && selected.to >= s.to) ||
           (selected.from <= s.from && selected.to >= s.to) ||
           (selected.to <= s.to && selected.to >= s.from) ||
           (selected.from <= s.to && selected.from >= s.from)
@@ -170,7 +191,8 @@ export class Highlighting {
 
     for (const highlight of Object.entries(highlights)) {
       const [entity, selections] = highlight;
-      const className = this.cssByGroup[entity as keyof typeof this.cssByGroup];
+      const { entitiesCSS } = this.styles;
+      const className = entitiesCSS[entity as keyof typeof entitiesCSS];
 
       CSS.highlights.set(className, new Highlight(...selections.flat()));
     }
@@ -193,22 +215,22 @@ export class Highlighting {
 
       const { left, top } = range.getBoundingClientRect();
 
-      if (entityPosition.some((p) => p.left === left)) {
+      if (entityPosition.some((p) => p.left === left && p.top === top)) {
         entityPosition.push({
           left: left,
-          top: top + 8,
+          top: top + this.styles.entitiesGap,
           entity,
         });
 
         continue;
       }
 
-      entityPosition.push({ left, top: top, entity });
+      entityPosition.push({ left, top, entity });
     }
 
     for (const { left, top, entity } of entityPosition) {
       const span = document.createElement("span");
-      span.className = "highlight__entity";
+      span.className = this.styles.entityClassName;
 
       span.style.left = `${left}px`;
       span.style.top = `${top}px`;

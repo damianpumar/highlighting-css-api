@@ -90,7 +90,13 @@ const classByGroup = entities.reduce((acc, token, i) => {
   return acc;
 }, {} as Record<string, string>);
 
-const highlighting = ref<Highlighting>(new Highlighting(classByGroup));
+const highlighting = ref<Highlighting>(
+  new Highlighting({
+    entitiesCSS: classByGroup,
+    entityClassName: "highlight__entity",
+    entitiesGap: 9,
+  })
+);
 
 const clearSelection = () => {
   localStorage.removeItem(LOCAL_STORAGE_KEY);
@@ -115,6 +121,7 @@ watch(
 onMounted(() => {
   const node = document.getElementById("lorem")!;
   highlighting.value.attachNode(node);
+  highlighting.value.entity = entities[0];
 
   loadSavedHighlight();
 });
@@ -170,7 +177,7 @@ onMounted(() => {
 
 .highlight__entity {
   display: block;
-  margin-top: 20px;
+  margin-top: 26px;
   font-size: 10px;
   position: absolute;
 }
