@@ -40,7 +40,8 @@ export class SpanSelection {
     };
 
     if (!this.config.allowCharacter) {
-      if (textSelection.text === " ") return;
+      if (this.isEmpty(selected.text)) return;
+      if (this.isASymbol(selected.text)) return;
       if (this.hasSelectedACharacter(textSelection)) return;
 
       this.completeLeftSide(nodeText, selected);
@@ -52,8 +53,9 @@ export class SpanSelection {
       const overlaps = this.selections.filter((s) => {
         return (
           (selected.from <= s.from && selected.to >= s.to) ||
-          (selected.to <= s.to && selected.to >= s.from) ||
-          (selected.from <= s.to && selected.from >= s.from)
+          (selected.from >= s.from && selected.to <= s.to) ||
+          (selected.from < s.from && selected.to > s.from) ||
+          (selected.from < s.to && selected.to > s.to)
         );
       });
 
@@ -75,31 +77,14 @@ export class SpanSelection {
     this.selections.push(selected);
   }
 
-  private completeRightSide(
-    nodeText: string,
-    selected: { from: number; to: number; entity: string; text: string }
-  ) {
-    while (true) {
-      const nextCharacter = nodeText.charAt(selected.to).replaceAll("\n", " ");
-
-      if (nextCharacter === " " || selected.to === nodeText.length - 1) {
-        break;
-      }
-      selected.to++;
-      selected.text = `${selected.text}${nextCharacter}`;
-    }
-  }
-
   private completeLeftSide(
     nodeText: string,
     selected: { from: number; to: number; entity: string; text: string }
   ) {
     while (true) {
-      const previousCharacter = nodeText
-        .charAt(selected.from - 1)
-        .replaceAll("\n", " ");
+      const previousCharacter = nodeText.charAt(selected.from - 1);
 
-      if (previousCharacter === " " || selected.from === 0) {
+      if (this.isALimit(previousCharacter) || selected.from === 0) {
         break;
       }
       selected.from--;
@@ -107,12 +92,38 @@ export class SpanSelection {
     }
   }
 
+  private completeRightSide(
+    nodeText: string,
+    selected: { from: number; to: number; entity: string; text: string }
+  ) {
+    while (true) {
+      const nextCharacter = nodeText.charAt(selected.to);
+
+      if (this.isALimit(nextCharacter) || selected.to === nodeText.length - 1) {
+        break;
+      }
+      selected.to++;
+      selected.text = `${selected.text}${nextCharacter}`;
+    }
+  }
+
   private hasSelectedACharacter(textSelection: TextSelection) {
     return (
       textSelection.text.length === 1 &&
-      textSelection.text !== " " &&
-      textSelection.nodeText.charAt(textSelection.from - 1) !== " " &&
-      textSelection.nodeText.charAt(textSelection.to) !== " "
+      !this.isEmpty(textSelection.nodeText.charAt(textSelection.from - 1)) &&
+      !this.isEmpty(textSelection.nodeText.charAt(textSelection.to))
     );
+  }
+
+  private isEmpty(character: string) {
+    return character === " " || character === "\n";
+  }
+
+  private isALimit(character: string) {
+    return this.isEmpty(character) || this.isASymbol(character);
+  }
+
+  private isASymbol(character: string) {
+    return character.toLowerCase() === character.toUpperCase();
   }
 }
