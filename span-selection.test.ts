@@ -142,7 +142,6 @@ describe("Span Selection", () => {
             entity: "TOKEN",
           },
           { from: 64, to: 69, text: "nting", entity: "TOKEN-2" },
-          // { from: 69, to: 70, text: " ", entity: "TOKEN-3" },
         ],
         [
           {
@@ -152,8 +151,15 @@ describe("Span Selection", () => {
             entity: "TOKEN",
           },
           { from: 61, to: 69, text: "printing", entity: "TOKEN-2" },
-          // { from: 69, to: 70, text: " ", entity: "TOKEN-3" },
         ],
+      ],
+      [
+        [
+          { from: 21, to: 32, text: "Lorem Ipsum", entity: "TOKEN" },
+          { from: 21, to: 32, text: "Lorem Ipsum", entity: "TOKEN" },
+          { from: 21, to: 32, text: "Lorem Ipsum", entity: "TOKEN" },
+        ],
+        [{ from: 21, to: 32, text: "Lorem Ipsum", entity: "TOKEN" }],
       ],
     ])(`%o %o`, (actual: Span[], expected: Span[]) => {
       const spanSelection = new SpanSelection();
@@ -169,6 +175,7 @@ describe("Span Selection", () => {
       });
 
       expect(spanSelection.spans).toEqual(expected);
+      expect(spanSelection.spans).toHaveLength(expected.length);
     });
   });
 

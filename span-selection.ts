@@ -1,3 +1,5 @@
+import { id } from "./jest.config";
+
 export type TextSelection = {
   from: number;
   to: number;
@@ -60,6 +62,8 @@ export class SpanSelection {
       this.selections = this.selections.filter((s) => !overlaps.includes(s));
     }
 
+    if (this.exists(selected)) return;
+
     this.select(selected);
   }
 
@@ -72,8 +76,12 @@ export class SpanSelection {
   }
 
   removeSpan(id: string) {
-    this.selections = this.selections.filter(
-      (s) => `${s.from}-${s.to}-${s.entity}` !== id
+    this.selections = this.selections.filter((s) => this.createId(s) !== id);
+  }
+
+  private exists(selected: Span) {
+    return this.selections.some(
+      (s) => this.createId(s) === this.createId(selected)
     );
   }
 
@@ -145,5 +153,9 @@ export class SpanSelection {
     if (this.isJustAWord(textSelection)) return true;
 
     return true;
+  }
+
+  private createId(span: Span) {
+    return `${span.from}-${span.to}-${span.entity}`;
   }
 }
