@@ -92,6 +92,18 @@ onMounted(() => {
   highlighting.value.attachNode(node);
   highlighting.value.entity = entities[0];
 
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Alt") {
+      highlighting.value.config.allowCharacter = true;
+    }
+  });
+
+  window.addEventListener("keyup", (e) => {
+    if (e.key === "Alt") {
+      highlighting.value.config.allowCharacter = false;
+    }
+  });
+
   loadSavedHighlight();
 });
 </script>
