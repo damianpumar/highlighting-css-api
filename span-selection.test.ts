@@ -291,19 +291,18 @@ describe("Span Selection", () => {
         entity: "TOKEN",
         nodeText: DUMMY_TEXT,
       };
+      const expectedSpan = {
+        from: 8,
+        to: 20,
+        text: "Lorem Ipsum?",
+        entity: "TOKEN",
+      };
 
       spanSelection.addSpan(textSelection);
 
-      expect(spanSelection.spans).toEqual([
-        {
-          from: 8,
-          to: 20,
-          text: "Lorem Ipsum?",
-          entity: "TOKEN",
-        },
-      ]);
+      expect(spanSelection.spans).toEqual([expectedSpan]);
 
-      spanSelection.removeSpan("8-20-TOKEN");
+      spanSelection.removeSpan(expectedSpan);
 
       expect(spanSelection.spans).toHaveLength(0);
     });

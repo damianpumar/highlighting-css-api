@@ -75,8 +75,10 @@ export class SpanSelection {
     this.selections = [];
   }
 
-  removeSpan(id: string) {
-    this.selections = this.selections.filter((s) => this.createId(s) !== id);
+  removeSpan(span: Span) {
+    this.selections = this.selections.filter(
+      (s) => this.createId(s) !== this.createId(span)
+    );
   }
 
   private exists(selected: Span) {

@@ -130,11 +130,9 @@ export class Highlighting {
   }
 
   private applyEntityStyle() {
-    const entityPosition: {
-      id: string;
+    const overlappedSpans: {
       left: number;
       top: number;
-      entity: string;
     }[] = [];
 
     while (this.entitySpanContainer.firstChild) {
@@ -144,42 +142,38 @@ export class Highlighting {
     for (const span of this.spans) {
       const { entity } = span;
       const range = this.createRange({ ...span, to: span.from + 1 });
-
       const { left, top } = range.getBoundingClientRect();
-      const spanTop = top + window.scrollY;
-      const id = `${span.from}-${span.to}-${entity}`;
 
-      const position = { id, left, top: spanTop, entity };
+      const position = { left, top: top + window.scrollY };
 
-      if (entityPosition.some((p) => p.left === left && p.top === top)) {
-        position.top = spanTop + this.styles.entitiesGap;
+      if (overlappedSpans.some((p) => p.left === left && p.top === top)) {
+        position.top += this.styles.entitiesGap;
       }
 
-      entityPosition.push(position);
-    }
+      const entityElement = document.createElement("span");
+      entityElement.className = this.styles.entityClassName;
 
-    for (const { id, left, top, entity } of entityPosition) {
-      const span = document.createElement("span");
-      span.className = this.styles.entityClassName;
+      entityElement.style.left = `${position.left}px`;
+      entityElement.style.top = `${position.top}px`;
 
-      span.style.left = `${left}px`;
-      span.style.top = `${top}px`;
-
-      span.innerText = entity;
+      entityElement.innerText = entity;
 
       const button = document.createElement("span");
       button.innerText = " - X ";
       button.style.cursor = "pointer";
       button.onclick = () => {
-        this.removeSpan(id);
+        this.removeSpan(span);
       };
-      span.appendChild(button);
 
-      this.entitySpanContainer.appendChild(span);
+      entityElement.appendChild(button);
+
+      this.entitySpanContainer.appendChild(entityElement);
+
+      overlappedSpans.push(position);
     }
   }
-  private removeSpan(id: string) {
-    this.spanSelection.removeSpan(id);
+  private removeSpan(span: Span) {
+    this.spanSelection.removeSpan(span);
     this.applyStyles();
   }
 
