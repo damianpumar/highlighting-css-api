@@ -145,9 +145,12 @@ export class SpanSelection {
   }
 
   private isSymbol(character: string) {
-    const format = /[!@#$%^&*()_+\-=\[\]{};:\\|,.<>\/]+/;
+    const numbers = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
 
-    return format.test(character);
+    return (
+      !numbers.includes(character) &&
+      character.toLowerCase() === character.toUpperCase()
+    );
   }
 
   private isValidSelection(textSelection: TextSelection) {

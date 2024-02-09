@@ -40,6 +40,15 @@ describe("Span Selection", () => {
         { from: 9, to: 15, text: "orem I", entity: "TOKEN" },
         {
           from: 8,
+          to: 19,
+          text: "Lorem Ipsum",
+          entity: "TOKEN",
+        },
+      ],
+      [
+        { from: 8, to: 20, text: "Lorem Ipsum?", entity: "TOKEN" },
+        {
+          from: 8,
           to: 20,
           text: "Lorem Ipsum?",
           entity: "TOKEN",
@@ -65,7 +74,7 @@ describe("Span Selection", () => {
       ],
       [
         { from: 1120, to: 1136, text: "for 'lorem ipsum", entity: "TOKEN" },
-        { from: 1120, to: 1137, text: "for 'lorem ipsum'", entity: "TOKEN" },
+        { from: 1120, to: 1136, text: "for 'lorem ipsum", entity: "TOKEN" },
       ],
       [
         {
@@ -76,8 +85,8 @@ describe("Span Selection", () => {
         },
         {
           from: 1872,
-          to: 1912,
-          text: 'of "de Finibus Bonorum et Malorum"',
+          to: 1911,
+          text: 'of "de Finibus Bonorum et Malorum',
           entity: "TOKEN",
         },
       ],
@@ -293,8 +302,8 @@ describe("Span Selection", () => {
       };
       const expectedSpan = {
         from: 8,
-        to: 20,
-        text: "Lorem Ipsum?",
+        to: 19,
+        text: "Lorem Ipsum",
         entity: "TOKEN",
       };
 
