@@ -106,6 +106,14 @@ export class SpanSelection {
         break;
       }
 
+      const firstCharacter = selected.text.charAt(0);
+
+      if (this.isEmpty(firstCharacter)) {
+        selected.from++;
+        selected.text = selected.text.slice(1);
+        break;
+      }
+
       selected.from--;
       selected.text = `${previousCharacter}${selected.text}`;
     }
@@ -123,6 +131,14 @@ export class SpanSelection {
         this.isSymbol(nextCharacter) ||
         selected.to === nodeText.length - 1
       ) {
+        break;
+      }
+
+      const lastCharacter = selected.text.charAt(selected.text.length - 1);
+
+      if (this.isEmpty(lastCharacter)) {
+        selected.to--;
+        selected.text = selected.text.slice(0, -1);
         break;
       }
 
@@ -159,7 +175,8 @@ export class SpanSelection {
   }
 
   private isValidSelection(textSelection: TextSelection) {
-    if (this.isEmpty(textSelection.text[0])) return false;
+    if (this.isEmpty(textSelection.text[0]) && textSelection.text.length === 1)
+      return false;
     if (this.isJustAWord(textSelection)) return true;
 
     return true;
