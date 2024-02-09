@@ -94,6 +94,10 @@ describe("Span Selection", () => {
         { from: 1993, to: 1994, text: "a", entity: "TOKEN" },
         { from: 1993, to: 1994, text: "a", entity: "TOKEN" },
       ],
+      [
+        { from: 2132, to: 2136, text: "amet", entity: "TOKEN" },
+        { from: 2132, to: 2136, text: "amet", entity: "TOKEN" },
+      ],
     ])(`%o %o`, (actual: Span, expected: Span) => {
       const spanSelection = new SpanSelection();
 

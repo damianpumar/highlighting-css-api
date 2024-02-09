@@ -110,22 +110,17 @@ export class SpanSelection {
     nodeText: string,
     selected: { from: number; to: number; entity: string; text: string }
   ) {
-    let iteration = 0;
     while (true) {
       const nextCharacter = nodeText.charAt(selected.to);
 
-      if (this.isEmpty(nextCharacter) || selected.to === nodeText.length - 1) {
-        if (
-          this.isSymbol(selected.text[selected.text.length - 1]) &&
-          iteration > 0
-        ) {
-          selected.text = selected.text.substring(0, selected.text.length - 1);
-          selected.to--;
-        }
+      if (
+        this.isEmpty(nextCharacter) ||
+        this.isSymbol(nextCharacter) ||
+        selected.to === nodeText.length - 1
+      ) {
         break;
       }
 
-      iteration++;
       selected.to++;
       selected.text = `${selected.text}${nextCharacter}`;
     }
