@@ -46,6 +46,10 @@ describe("Span Selection", () => {
         },
       ],
       [
+        { from: 852, to: 854, text: "or", entity: "TOKEN" },
+        { from: 852, to: 854, text: "or", entity: "TOKEN" },
+      ],
+      [
         { from: 8, to: 20, text: "Lorem Ipsum?", entity: "TOKEN" },
         {
           from: 8,

@@ -98,9 +98,14 @@ export class SpanSelection {
     while (true) {
       const previousCharacter = nodeText.charAt(selected.from - 1);
 
-      if (this.isEmpty(previousCharacter) || selected.from === 0) {
+      if (
+        this.isEmpty(previousCharacter) ||
+        this.isSymbol(previousCharacter) ||
+        selected.to === 0
+      ) {
         break;
       }
+
       selected.from--;
       selected.text = `${previousCharacter}${selected.text}`;
     }
