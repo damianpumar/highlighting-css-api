@@ -32,39 +32,40 @@ export class SpanSelection {
     allowCharacter: false,
   };
 
-  public addSpan(textSelection?: TextSelection) {
-    if (!textSelection) return;
-
-    const { nodeText, ...rest } = textSelection;
-
-    const selected = {
-      ...rest,
-    };
+  public addSpan(selection?: TextSelection) {
+    if (!selection) return;
 
     if (!this.config.allowCharacter) {
-      if (!this.isValidSelection(textSelection)) return;
+      if (this.isEmpty(selection.text)) return;
 
-      this.completeLeftSide(nodeText, selected);
+      this.completeLeftSide(selection);
 
-      this.completeRightSide(nodeText, selected);
+      this.completeRightSide(selection);
     }
 
     if (!this.config.allowOverlap) {
       const overlaps = this.selections.filter((s) => {
         return (
-          (selected.from <= s.from && selected.to >= s.to) ||
-          (selected.from >= s.from && selected.to <= s.to) ||
-          (selected.from < s.from && selected.to > s.from) ||
-          (selected.from < s.to && selected.to > s.to)
+          (selection.from <= s.from && selection.to >= s.to) ||
+          (selection.from >= s.from && selection.to <= s.to) ||
+          (selection.from < s.from && selection.to > s.from) ||
+          (selection.from < s.to && selection.to > s.to)
         );
       });
 
       this.selections = this.selections.filter((s) => !overlaps.includes(s));
     }
 
-    if (this.exists(selected)) return;
+    if (this.exists(selection)) return;
 
-    this.select(selected);
+    const { from, to, entity, text } = selection;
+
+    this.select({
+      from,
+      to,
+      entity,
+      text,
+    });
   }
 
   loadSpans(selections: Span[]) {
@@ -81,9 +82,9 @@ export class SpanSelection {
     );
   }
 
-  private exists(selected: Span) {
+  private exists(selection: TextSelection) {
     return this.selections.some(
-      (s) => this.createId(s) === this.createId(selected)
+      (s) => this.createId(s) === this.createId(selection)
     );
   }
 
@@ -91,78 +92,58 @@ export class SpanSelection {
     this.selections.push(selected);
   }
 
-  private completeLeftSide(
-    nodeText: string,
-    selected: { from: number; to: number; entity: string; text: string }
-  ) {
+  private completeLeftSide(selection: TextSelection) {
     while (true) {
-      const previousCharacter = nodeText.charAt(selected.from - 1);
+      const prevChar = selection.nodeText.charAt(selection.from - 1);
 
       if (
-        this.isEmpty(previousCharacter) ||
-        this.isSymbol(previousCharacter) ||
-        selected.to === 0
+        this.isEmpty(prevChar) ||
+        this.isSymbol(prevChar) ||
+        selection.to === 0
       ) {
         break;
       }
 
-      const firstCharacter = selected.text.charAt(0);
+      const firstCharacter = selection.text.charAt(0);
 
       if (this.isEmpty(firstCharacter)) {
-        selected.from++;
-        selected.text = selected.text.slice(1);
+        selection.from++;
+        selection.text = selection.text.slice(1);
         break;
       }
 
-      selected.from--;
-      selected.text = `${previousCharacter}${selected.text}`;
+      selection.from--;
+      selection.text = `${prevChar}${selection.text}`;
     }
   }
 
-  private completeRightSide(
-    nodeText: string,
-    selected: { from: number; to: number; entity: string; text: string }
-  ) {
+  private completeRightSide(selection: TextSelection) {
     while (true) {
-      const nextCharacter = nodeText.charAt(selected.to);
+      const nextCharacter = selection.nodeText.charAt(selection.to);
 
       if (
         this.isEmpty(nextCharacter) ||
         this.isSymbol(nextCharacter) ||
-        selected.to === nodeText.length - 1
+        selection.to === selection.nodeText.length - 1
       ) {
         break;
       }
 
-      const lastCharacter = selected.text.charAt(selected.text.length - 1);
+      const lastCharacter = selection.text.charAt(selection.text.length - 1);
 
       if (this.isEmpty(lastCharacter)) {
-        selected.to--;
-        selected.text = selected.text.slice(0, -1);
+        selection.to--;
+        selection.text = selection.text.slice(0, -1);
         break;
       }
 
-      selected.to++;
-      selected.text = `${selected.text}${nextCharacter}`;
+      selection.to++;
+      selection.text = `${selection.text}${nextCharacter}`;
     }
   }
 
   private isEmpty(character: string) {
     return character === " " || character === "\n";
-  }
-
-  private isJustAWord(textSelection: TextSelection) {
-    const currentText = textSelection.text;
-
-    const previous = textSelection.nodeText.charAt(textSelection.from - 1);
-    const next = textSelection.nodeText.charAt(textSelection.to);
-
-    return (
-      currentText.length === 1 &&
-      this.isEmpty(previous) &&
-      this.isEmpty(next) &&
-      !this.isSymbol(currentText)
-    );
   }
 
   private isSymbol(character: string) {
@@ -174,15 +155,7 @@ export class SpanSelection {
     );
   }
 
-  private isValidSelection(textSelection: TextSelection) {
-    if (this.isEmpty(textSelection.text[0]) && textSelection.text.length === 1)
-      return false;
-    if (this.isJustAWord(textSelection)) return true;
-
-    return true;
-  }
-
-  private createId(span: Span) {
+  private createId(span: Span | TextSelection) {
     return `${span.from}-${span.to}-${span.entity}`;
   }
 }
