@@ -12,6 +12,13 @@
           <p>Selected: {{ highlighting.entity }}</p>
         </div>
         <hr />
+
+        <p>Replace last selection with:</p>
+        <div class="entities">
+          <p v-for="entity in entities" @click="replace(entity)">
+            | {{ entity }} |
+          </p>
+        </div>
       </div>
 
       <div>
@@ -111,6 +118,13 @@ const loadSavedHighlight = () => {
   highlighting.value.loadHighlights(selections);
 };
 
+const replace = (entity: string) => {
+  const lastSpan =
+    highlighting.value.spans[highlighting.value.spans.length - 1];
+
+  highlighting.value.replaceEntity(lastSpan, entity);
+};
+
 watch(
   () => highlighting.value.spans,
   (selections) => {
@@ -198,6 +212,7 @@ onMounted(() => {
   display: flex;
   flex-direction: row;
   gap: 5px;
+  cursor: pointer;
 }
 
 .container {

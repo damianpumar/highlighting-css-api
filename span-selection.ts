@@ -1,5 +1,3 @@
-import { id } from "./jest.config";
-
 export type TextSelection = {
   from: number;
   to: number;
@@ -70,6 +68,15 @@ export class SpanSelection {
 
   loadSpans(selections: Span[]) {
     selections.forEach((s) => this.select(s));
+  }
+
+  replaceEntity(span: Span, entity: string) {
+    const found = this.selections.find(
+      (s) => this.createId(s) === this.createId(span)
+    );
+    if (!found) return;
+
+    found.entity = entity;
   }
 
   clear() {

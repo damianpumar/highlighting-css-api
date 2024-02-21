@@ -86,6 +86,11 @@ export class Highlighting {
     this.applyStyles();
   }
 
+  replaceEntity(span: Span, entity: string) {
+    this.spanSelection.replaceEntity(span, entity);
+    this.applyStyles();
+  }
+
   removeAllHighlights() {
     this.spanSelection.clear();
     this.applyStyles();

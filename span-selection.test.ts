@@ -336,4 +336,62 @@ describe("Span Selection", () => {
       expect(spanSelection.spans).toHaveLength(0);
     });
   });
+
+  describe("should replace the entity for the span", () => {
+    test("should replace entity", () => {
+      const spanSelection = new SpanSelection();
+      const textSelection: TextSelection = {
+        from: 10,
+        to: 17,
+        text: "rem Ips",
+        entity: "TOKEN",
+        nodeText: DUMMY_TEXT,
+      };
+      const expectedSpan = {
+        from: 8,
+        to: 19,
+        text: "Lorem Ipsum",
+        entity: "TOKEN",
+      };
+
+      spanSelection.addSpan(textSelection);
+
+      expect(spanSelection.spans).toEqual([expectedSpan]);
+
+      spanSelection.replaceEntity(expectedSpan, "TOKEN-2");
+
+      expect(spanSelection.spans[0].entity).toEqual("TOKEN-2");
+    });
+
+    test("should not replace entity if span is not found", () => {
+      const spanSelection = new SpanSelection();
+      const textSelection: TextSelection = {
+        from: 10,
+        to: 17,
+        text: "rem Ips",
+        entity: "TOKEN",
+        nodeText: DUMMY_TEXT,
+      };
+      const expectedSpan = {
+        from: 8,
+        to: 19,
+        text: "Lorem Ipsum",
+        entity: "TOKEN",
+      };
+      const noExisting = {
+        from: 300,
+        to: 21,
+        text: "xxx",
+        entity: "TOKEN-3",
+      };
+
+      spanSelection.addSpan(textSelection);
+
+      expect(spanSelection.spans).toEqual([expectedSpan]);
+
+      spanSelection.replaceEntity(noExisting, "TOKEN-2");
+
+      expect(spanSelection.spans[0].entity).toEqual("TOKEN");
+    });
+  });
 });
