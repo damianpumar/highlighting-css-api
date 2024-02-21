@@ -32,6 +32,7 @@ export class SpanSelection {
 
   public addSpan(selection?: TextSelection) {
     if (!selection) return;
+    if (this.isOutOfRange(selection)) return;
 
     if (!this.config.allowCharacter) {
       if (this.isEmpty(selection.text)) return;
@@ -64,6 +65,10 @@ export class SpanSelection {
       entity,
       text,
     });
+  }
+
+  isOutOfRange(selection: TextSelection) {
+    return selection.from <= 0 || selection.to <= 0;
   }
 
   loadSpans(selections: Span[]) {

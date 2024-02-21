@@ -394,4 +394,46 @@ describe("Span Selection", () => {
       expect(spanSelection.spans[0].entity).toEqual("TOKEN");
     });
   });
+
+  describe("should not create span for selections", () => {
+    test("should not create out of range span", () => {
+      const spanSelection = new SpanSelection();
+      const textSelection1: TextSelection = {
+        from: 0,
+        to: -1,
+        text: "NOT EXIST",
+        entity: "TOKEN",
+        nodeText: DUMMY_TEXT,
+      };
+
+      spanSelection.addSpan(textSelection1);
+
+      const textSelection2: TextSelection = {
+        from: -1,
+        to: 0,
+        text: "NOT EXIST",
+        entity: "TOKEN",
+        nodeText: DUMMY_TEXT,
+      };
+
+      spanSelection.addSpan(textSelection2);
+
+      expect(spanSelection.spans).toEqual([]);
+    });
+
+    test("should not create span for zero position", () => {
+      const spanSelection = new SpanSelection();
+      const textSelection1: TextSelection = {
+        from: 0,
+        to: 0,
+        text: "NOT EXIST",
+        entity: "TOKEN",
+        nodeText: DUMMY_TEXT,
+      };
+
+      spanSelection.addSpan(textSelection1);
+
+      expect(spanSelection.spans).toEqual([]);
+    });
+  });
 });
