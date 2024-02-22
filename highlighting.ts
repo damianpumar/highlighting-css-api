@@ -70,7 +70,7 @@ export class Highlighting {
 
   loadHighlights(selections: Span[] = []) {
     if (!CSS.highlights) {
-      console.error(
+      throw new Error(
         "The CSS Custom Highlight API is not supported in this browser!"
       );
     }
