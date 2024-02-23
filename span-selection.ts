@@ -1,16 +1,29 @@
+export type Entity = {
+  id: string;
+  text: string;
+};
+
 export type TextSelection = {
   from: number;
   to: number;
-  entity: string;
+  entity: Entity;
   text: string;
-  nodeText: string;
+  node: {
+    element: Node;
+    text: string;
+    id: string;
+  };
 };
 
 export type Span = {
   from: number;
   to: number;
-  entity: string;
+  entity: Entity;
   text: string;
+  node: {
+    element: Node;
+    id: string;
+  };
 };
 
 type Configuration = {
@@ -20,6 +33,18 @@ type Configuration = {
 
 export class SpanSelection {
   private selections: Span[] = [];
+
+  public constructor() {}
+
+  // eslint-disable-next-line no-use-before-define
+  private static instance: SpanSelection;
+  public static getInstance() {
+    if (!this.instance) {
+      this.instance = new SpanSelection();
+    }
+
+    return this.instance;
+  }
 
   get spans() {
     return [...this.selections];
@@ -33,6 +58,10 @@ export class SpanSelection {
   public addSpan(selection?: TextSelection) {
     if (!selection) return;
     if (this.isOutOfRange(selection)) return;
+
+    const filteredSelections = this.selections.filter(
+      (s) => s.node.id === selection.node.id
+    );
 
     if (!this.config.allowCharacter) {
       if (this.isEmpty(selection.text)) return;
@@ -52,18 +81,25 @@ export class SpanSelection {
         );
       });
 
-      this.selections = this.selections.filter((s) => !overlaps.includes(s));
+      this.selections = [
+        ...this.selections.filter((s) => s.node.id !== selection.node.id),
+        ...filteredSelections.filter((s) => !overlaps.includes(s)),
+      ];
     }
 
     if (this.exists(selection)) return;
 
-    const { from, to, entity, text } = selection;
+    const { from, to, entity, text, node } = selection;
 
     this.select({
       from,
       to,
       entity,
       text,
+      node: {
+        element: node.element,
+        id: node.id,
+      },
     });
   }
 
@@ -75,10 +111,11 @@ export class SpanSelection {
     selections.forEach((s) => this.select(s));
   }
 
-  replaceEntity(span: Span, entity: string) {
+  replaceEntity(span: Span, entity: Entity) {
     const found = this.selections.find(
       (s) => this.createId(s) === this.createId(span)
     );
+
     if (!found) return;
 
     found.entity = entity;
@@ -106,7 +143,7 @@ export class SpanSelection {
 
   private completeLeftSide(selection: TextSelection) {
     while (true) {
-      const prevChar = selection.nodeText.charAt(selection.from - 1);
+      const prevChar = selection.node.text.charAt(selection.from - 1);
 
       if (
         this.isEmpty(prevChar) ||
@@ -131,12 +168,12 @@ export class SpanSelection {
 
   private completeRightSide(selection: TextSelection) {
     while (true) {
-      const nextCharacter = selection.nodeText.charAt(selection.to);
+      const nextCharacter = selection.node.text.charAt(selection.to);
 
       if (
         this.isEmpty(nextCharacter) ||
         this.isSymbol(nextCharacter) ||
-        selection.to === selection.nodeText.length - 1
+        selection.to === selection.node.text.length - 1
       ) {
         break;
       }
@@ -168,6 +205,6 @@ export class SpanSelection {
   }
 
   private createId(span: Span | TextSelection) {
-    return `${span.from}-${span.to}-${span.entity}`;
+    return `${span.from}-${span.to}-${span.entity.id}-${span.node.id}`;
   }
 }

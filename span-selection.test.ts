@@ -33,6 +33,46 @@ const DUMMY_TEXT = `What is Lorem Ipsum? Lorem Ipsum is simply dummy text of the
       Cicero are also reproduced in their exact original form, accompanied by
       English versions from the 1914 translation by H. Rackham.`;
 
+type TestSelection = {
+  from: number;
+  to: number;
+  text: string;
+  entity: string;
+};
+
+const createTextSelection = (selection: TestSelection): TextSelection => {
+  return {
+    from: selection.from,
+    to: selection.to,
+    text: selection.text,
+    entity: {
+      id: selection.entity,
+      text: selection.entity,
+    },
+    node: {
+      element: {} as HTMLElement,
+      id: "node-id",
+      text: DUMMY_TEXT,
+    },
+  };
+};
+
+const createSpan = (selection: TestSelection): Span => {
+  return {
+    from: selection.from,
+    to: selection.to,
+    text: selection.text,
+    entity: {
+      id: selection.entity,
+      text: selection.entity,
+    },
+    node: {
+      element: {} as HTMLElement,
+      id: "node-id",
+    },
+  };
+};
+
 describe("Span Selection", () => {
   describe("should auto complete token correctly", () => {
     test.each([
@@ -114,17 +154,14 @@ describe("Span Selection", () => {
         { from: 2132, to: 2136, text: "amet", entity: "TOKEN" },
         { from: 2132, to: 2136, text: "amet", entity: "TOKEN" },
       ],
-    ])(`%o %o`, (actual: Span, expected: Span) => {
+    ])(`%o %o`, (actual: TestSelection, expected: TestSelection) => {
       const spanSelection = new SpanSelection();
 
-      const textSelection: TextSelection = {
-        ...actual,
-        nodeText: DUMMY_TEXT,
-      };
+      const textSelection = createTextSelection(actual);
 
       spanSelection.addSpan(textSelection);
 
-      expect(spanSelection.spans[0]).toEqual(expected);
+      expect(spanSelection.spans[0]).toEqual(createSpan(expected));
       expect(spanSelection.spans).toHaveLength(1);
     });
   });
@@ -135,18 +172,15 @@ describe("Span Selection", () => {
         { from: 4, to: 5, text: " ", entity: "TOKEN" },
         { from: 4, to: 5, text: " ", entity: "TOKEN" },
       ],
-    ])(`%o %o`, (actual: Span, expected: Span) => {
+    ])(`%o %o`, (actual: TestSelection, expected: TestSelection) => {
       const spanSelection = new SpanSelection();
       spanSelection.config.allowCharacter = true;
 
-      const textSelection: TextSelection = {
-        ...actual,
-        nodeText: DUMMY_TEXT,
-      };
+      const textSelection = createTextSelection(actual);
 
       spanSelection.addSpan(textSelection);
 
-      expect(spanSelection.spans[0]).toEqual(expected);
+      expect(spanSelection.spans[0]).toEqual(createSpan(expected));
     });
   });
 
@@ -190,20 +224,17 @@ describe("Span Selection", () => {
         ],
         [{ from: 21, to: 32, text: "Lorem Ipsum", entity: "TOKEN" }],
       ],
-    ])(`%o %o`, (actual: Span[], expected: Span[]) => {
+    ])(`%o %o`, (actual: TestSelection[], expected: TestSelection[]) => {
       const spanSelection = new SpanSelection();
       spanSelection.config.allowOverlap = true;
 
       actual.forEach((span) => {
-        const textSelection: TextSelection = {
-          ...span,
-          nodeText: DUMMY_TEXT,
-        };
+        const textSelection = createTextSelection(span);
 
         spanSelection.addSpan(textSelection);
       });
 
-      expect(spanSelection.spans).toEqual(expected);
+      expect(spanSelection.spans).toEqual(expected.map((e) => createSpan(e)));
       expect(spanSelection.spans).toHaveLength(expected.length);
     });
   });
@@ -232,21 +263,18 @@ describe("Span Selection", () => {
           { from: 69, to: 70, text: " ", entity: "TOKEN-3" },
         ],
       ],
-    ])(`%o %o`, (actual: Span[], expected: Span[]) => {
+    ])(`%o %o`, (actual: TestSelection[], expected: TestSelection[]) => {
       const spanSelection = new SpanSelection();
       spanSelection.config.allowOverlap = true;
       spanSelection.config.allowCharacter = true;
 
       actual.forEach((span) => {
-        const textSelection: TextSelection = {
-          ...span,
-          nodeText: DUMMY_TEXT,
-        };
+        const textSelection = createTextSelection(span);
 
         spanSelection.addSpan(textSelection);
       });
 
-      expect(spanSelection.spans).toEqual(expected);
+      expect(spanSelection.spans).toEqual(expected.map((e) => createSpan(e)));
     });
   });
 
@@ -274,19 +302,16 @@ describe("Span Selection", () => {
           entity: "TOKEN",
         },
       ],
-    ])(`%o %o`, (actual: Span[], expected: Span) => {
+    ])(`%o %o`, (actual: TestSelection[], expected: TestSelection) => {
       const spanSelection = new SpanSelection();
 
       actual.forEach((span) => {
-        const textSelection: TextSelection = {
-          ...span,
-          nodeText: DUMMY_TEXT,
-        };
+        const textSelection = createTextSelection(span);
 
         spanSelection.addSpan(textSelection);
       });
 
-      expect(spanSelection.spans[0]).toEqual(expected);
+      expect(spanSelection.spans[0]).toEqual(createSpan(expected));
       expect(spanSelection.spans).toHaveLength(1);
     });
   });
@@ -294,15 +319,11 @@ describe("Span Selection", () => {
   describe("should not create span for one character when character level is not allowed", () => {
     test.each([{ from: 4, to: 5, text: " ", entity: "TOKEN" }])(
       `%o %o`,
-      (actual: Span) => {
+      (actual: TestSelection) => {
         const spanSelection = new SpanSelection();
         spanSelection.config.allowCharacter = false;
 
-        const textSelection: TextSelection = {
-          ...actual,
-          nodeText: DUMMY_TEXT,
-        };
-
+        const textSelection = createTextSelection(actual);
         spanSelection.addSpan(textSelection);
 
         expect(spanSelection.spans).toEqual([]);
@@ -313,19 +334,19 @@ describe("Span Selection", () => {
   describe("should remove span created", () => {
     test("should remove span", () => {
       const spanSelection = new SpanSelection();
-      const textSelection: TextSelection = {
+      const textSelection = createTextSelection({
         from: 10,
         to: 17,
         text: "rem Ips",
         entity: "TOKEN",
-        nodeText: DUMMY_TEXT,
-      };
-      const expectedSpan = {
+      });
+
+      const expectedSpan = createSpan({
         from: 8,
         to: 19,
         text: "Lorem Ipsum",
         entity: "TOKEN",
-      };
+      });
 
       spanSelection.addSpan(textSelection);
 
@@ -340,81 +361,87 @@ describe("Span Selection", () => {
   describe("should replace the entity for the span", () => {
     test("should replace entity", () => {
       const spanSelection = new SpanSelection();
-      const textSelection: TextSelection = {
+      const textSelection = createTextSelection({
         from: 10,
         to: 17,
         text: "rem Ips",
         entity: "TOKEN",
-        nodeText: DUMMY_TEXT,
-      };
-      const expectedSpan = {
+      });
+
+      const expectedSpan = createSpan({
         from: 8,
         to: 19,
         text: "Lorem Ipsum",
         entity: "TOKEN",
+      });
+
+      const newEntity = {
+        id: "TOKEN-2",
+        text: "TOKEN-2",
       };
 
       spanSelection.addSpan(textSelection);
 
       expect(spanSelection.spans).toEqual([expectedSpan]);
 
-      spanSelection.replaceEntity(expectedSpan, "TOKEN-2");
+      spanSelection.replaceEntity(expectedSpan, newEntity);
 
-      expect(spanSelection.spans[0].entity).toEqual("TOKEN-2");
+      expect(spanSelection.spans[0].entity).toEqual(newEntity);
     });
 
     test("should not replace entity if span is not found", () => {
       const spanSelection = new SpanSelection();
-      const textSelection: TextSelection = {
+      const textSelection = createTextSelection({
         from: 10,
         to: 17,
         text: "rem Ips",
         entity: "TOKEN",
-        nodeText: DUMMY_TEXT,
-      };
-      const expectedSpan = {
+      });
+      const expectedSpan = createSpan({
         from: 8,
         to: 19,
         text: "Lorem Ipsum",
         entity: "TOKEN",
-      };
-      const noExisting = {
+      });
+
+      const noExisting = createSpan({
         from: 300,
         to: 21,
         text: "xxx",
         entity: "TOKEN-3",
-      };
+      });
 
       spanSelection.addSpan(textSelection);
 
       expect(spanSelection.spans).toEqual([expectedSpan]);
 
-      spanSelection.replaceEntity(noExisting, "TOKEN-2");
+      spanSelection.replaceEntity(noExisting, {
+        id: "TOKEN-2",
+        text: "TOKEN-2",
+      });
 
-      expect(spanSelection.spans[0].entity).toEqual("TOKEN");
+      expect(spanSelection.spans[0].entity.id).toEqual("TOKEN");
     });
   });
 
   describe("should not create span for selections", () => {
     test("should not create out of range span", () => {
       const spanSelection = new SpanSelection();
-      const textSelection1: TextSelection = {
-        from: 0,
-        to: -1,
+      const textSelection1 = createTextSelection({
+        from: -1,
+        to: 10,
         text: "NOT EXIST",
         entity: "TOKEN",
-        nodeText: DUMMY_TEXT,
-      };
+      });
 
       spanSelection.addSpan(textSelection1);
 
-      const textSelection2: TextSelection = {
-        from: -1,
+      const textSelection2 = createTextSelection({
+        from: 0,
         to: 0,
         text: "NOT EXIST",
         entity: "TOKEN",
-        nodeText: DUMMY_TEXT,
-      };
+      });
 
       spanSelection.addSpan(textSelection2);
 
@@ -423,13 +450,12 @@ describe("Span Selection", () => {
 
     test("should not create span for zero position", () => {
       const spanSelection = new SpanSelection();
-      const textSelection1: TextSelection = {
+      const textSelection1 = createTextSelection({
         from: 0,
         to: 0,
         text: "NOT EXIST",
         entity: "TOKEN",
-        nodeText: DUMMY_TEXT,
-      };
+      });
 
       spanSelection.addSpan(textSelection1);
 
