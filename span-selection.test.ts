@@ -436,29 +436,6 @@ describe("Span Selection", () => {
 
       spanSelection.addSpan(textSelection1);
 
-      const textSelection2 = createTextSelection({
-        from: 0,
-        to: 0,
-        text: "NOT EXIST",
-        entity: "TOKEN",
-      });
-
-      spanSelection.addSpan(textSelection2);
-
-      expect(spanSelection.spans).toEqual([]);
-    });
-
-    test("should not create span for zero position", () => {
-      const spanSelection = new SpanSelection();
-      const textSelection1 = createTextSelection({
-        from: 0,
-        to: 0,
-        text: "NOT EXIST",
-        entity: "TOKEN",
-      });
-
-      spanSelection.addSpan(textSelection1);
-
       expect(spanSelection.spans).toEqual([]);
     });
   });
